@@ -3,8 +3,9 @@ import * as http from 'http'
 import * as socketIO from 'socket.io'
 import * as bodyParser from 'body-parser'
 import Wrapper from './wrapper'
-import Messenger from './messenger';
-import { AddressInfo } from 'net';
+import Messenger from './messenger'
+import { AddressInfo } from 'net'
+import router from './router'
 
 const app = express()
 const server = http.createServer(app)
@@ -24,11 +25,7 @@ const command = args.shift() as string
 const wrapper = new Wrapper({command, args})
 const messenger = new Messenger(io, wrapper)
 
-app.get('/console', (req, res) => {
-  res.send({
-    messages: messenger.messages
-  })
-})
+router(app, messenger)
 
 server.listen(process.env.PORT || 8999, () => {
   const addrInfo = server.address() as AddressInfo

@@ -1,5 +1,5 @@
 import * as SocketIO from 'socket.io'
-import Wrapper from './wrapper';
+import Wrapper from './wrapper'
 
 enum MessageType {
   Plain,
