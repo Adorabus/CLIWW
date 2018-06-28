@@ -1,5 +1,5 @@
 import Api from '@/services/Api'
 
 export function getOldMessages () {
-  return Api().get('/')
+  return Api().get('console')
 }

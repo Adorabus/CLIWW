@@ -11,8 +11,6 @@ const server = http.createServer(app)
 const io = socketIO(server)
 
 app.use(bodyParser.json())
-app.use(require('cors')())
-app.use(require('morgan')('combined'))
 
 const idx = process.argv.indexOf('--cmd')
 if (idx === -1) {
@@ -26,7 +24,7 @@ const command = args.shift() as string
 const wrapper = new Wrapper({command, args})
 const messenger = new Messenger(io, wrapper)
 
-app.get('/', (req, res) => {
+app.get('/console', (req, res) => {
   res.send({
     messages: messenger.messages
   })
