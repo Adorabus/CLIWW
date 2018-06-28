@@ -21,8 +21,11 @@ class Messenger {
                     content: `[${ipAddr}]> ${data}`,
                     type: MessageType.Command
                 });
-                if (this.wrapper.wrapped) {
-                    this.wrapper.wrapped.stdin.write(`${data}\n`);
+                if (!this.wrapper.send(`${data}\n`)) {
+                    this.broadcast({
+                        content: 'Server is not running!',
+                        type: MessageType.Error
+                    });
                 }
             });
             client.on('disconnect', () => {

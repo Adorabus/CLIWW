@@ -15,4 +15,13 @@ export default class Wrapper {
     this.wrapped.stdout.setEncoding('utf-8')
     this.wrapped.stderr.setEncoding('utf-8')
   }
+
+  send (command: string): boolean {
+    if (this.wrapped.stdin.writable) {
+      this.wrapped.stdin.write(command)
+      return true
+    } else {
+      return false
+    }
+  }
 }

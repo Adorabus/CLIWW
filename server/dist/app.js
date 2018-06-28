@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const io = socketIO(server);
 app.use(bodyParser.json());
 app.use(require('cors')());
-app.use(require('morgan')('tiny'));
+app.use(require('morgan')('combined'));
 const idx = process.argv.indexOf('--cmd');
 if (idx === -1) {
     console.error('Missing launch command! (--cmd command [arg1, ...])');

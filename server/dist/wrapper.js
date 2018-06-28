@@ -9,6 +9,15 @@ class Wrapper {
         this.wrapped.stdout.setEncoding('utf-8');
         this.wrapped.stderr.setEncoding('utf-8');
     }
+    send(command) {
+        if (this.wrapped.stdin.writable) {
+            this.wrapped.stdin.write(command);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 }
 exports.default = Wrapper;
 //# sourceMappingURL=wrapper.js.map
