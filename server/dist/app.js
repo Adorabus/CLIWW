@@ -22,10 +22,8 @@ const command = args.shift();
 const wrapper = new wrapper_1.default({ command, args });
 const messenger = new messenger_1.default(io, wrapper);
 router_1.default(app, messenger);
-console.log('Opening connection to database...');
 database_1.default()
     .then(() => {
-    console.log('Connection to database established.');
     server.listen(process.env.PORT || 8999, () => {
         const addrInfo = server.address();
         console.log(`Listening on port ${addrInfo.port}.`);

@@ -10,7 +10,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const typeorm_1 = require("typeorm");
-let User = class User {
+let User = class User extends typeorm_1.BaseEntity {
+    constructor() {
+        super(...arguments);
+        this.admin = false;
+    }
 };
 __decorate([
     typeorm_1.PrimaryGeneratedColumn(),
@@ -18,10 +22,13 @@ __decorate([
 ], User.prototype, "id", void 0);
 __decorate([
     typeorm_1.Column({
-        length: 16
+        length: 16,
+        unique: true,
+        collation: 'NOCASE',
+        charset: 'utf8'
     }),
     __metadata("design:type", String)
-], User.prototype, "name", void 0);
+], User.prototype, "username", void 0);
 __decorate([
     typeorm_1.Column(),
     __metadata("design:type", Boolean)

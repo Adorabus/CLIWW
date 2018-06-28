@@ -61,4 +61,7 @@ typings/
 .next
 
 # test
-test/
+/test/
+
+# database
+app.db

@@ -27,10 +27,8 @@ const wrapper = new Wrapper({command, args})
 const messenger = new Messenger(io, wrapper)
 
 router(app, messenger)
-console.log('Opening connection to database...')
 database()
   .then(() => {
-    console.log('Connection to database established.')
     server.listen(process.env.PORT || 8999, () => {
       const addrInfo = server.address() as AddressInfo
       console.log(`Listening on port ${addrInfo.port}.`)
