@@ -2,7 +2,10 @@
   div
     ul.output-log(v-chat-scroll)
       li.message(v-for='message in messages', :class='"message-" + messageClass[message.type]') {{ message.content }}
-    input.command-input(type='text', v-model='input', @keydown.enter.prevent='send', autofocus)
+    input.command-input(
+      type='text', v-model='input', autofocus
+      @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
+    )
 </template>
 
 <script>
@@ -16,6 +19,8 @@ export default Vue.extend({
     return {
       input: '',
       messages: [],
+      history: [],
+      historyPosition: 0,
       socket: null,
       messageClass: ['plain', 'error', 'command']
     }
@@ -24,7 +29,28 @@ export default Vue.extend({
     send () {
       if (this.input.trim().length === 0) return
       this.socket.emit('command', this.input)
+      this.history.push(this.input)
       this.input = ''
+    },
+    historyUp () {
+      if (this.historyPosition > 0) {
+        this.historyPosition--
+        this.input = this.history[this.historyPosition]
+      }
+    },
+    historyDown () {
+      if (this.historyPosition < this.history.length - 1) {
+        this.historyPosition++
+        this.input = this.history[this.historyPosition]
+      } else if (this.historyPosition === this.history.length - 1) {
+        this.historyPosition++
+        this.input = ''
+      }
+    }
+  },
+  watch: {
+    history () {
+      this.historyPosition = this.history.length
     }
   },
   async mounted () {
