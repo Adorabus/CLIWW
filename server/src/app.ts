@@ -6,6 +6,7 @@ import Wrapper from './wrapper'
 import Messenger from './messenger'
 import { AddressInfo } from 'net'
 import router from './router'
+import database from './database'
 
 const app = express()
 const server = http.createServer(app)
@@ -26,8 +27,15 @@ const wrapper = new Wrapper({command, args})
 const messenger = new Messenger(io, wrapper)
 
 router(app, messenger)
-
-server.listen(process.env.PORT || 8999, () => {
-  const addrInfo = server.address() as AddressInfo
-  console.log(`Listening on port ${addrInfo.port}.`)
-})
+console.log('Opening connection to database...')
+database()
+  .then(() => {
+    console.log('Connection to database established.')
+    server.listen(process.env.PORT || 8999, () => {
+      const addrInfo = server.address() as AddressInfo
+      console.log(`Listening on port ${addrInfo.port}.`)
+    })
+  })
+  .catch((err) => {
+    console.error(err)
+  })
