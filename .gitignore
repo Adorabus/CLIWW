@@ -62,6 +62,3 @@ typings/
 
 # test
 /test/
-
-# database
-app.db
