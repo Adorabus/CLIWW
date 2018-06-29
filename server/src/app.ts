@@ -1,7 +1,5 @@
-import * as express from 'express'
 import * as http from 'http'
 import * as socketIO from 'socket.io'
-import * as cors from 'cors'
 import Wrapper from './wrapper'
 import Messenger from './messenger'
 import {AddressInfo} from 'net'
@@ -16,10 +14,7 @@ const argv = yargs
   .demandCommand(1, 'No command specified.')
   .argv
 
-const app = express()
-app.use(cors())
-
-const server = http.createServer(app)
+const server = http.createServer()
 const io = socketIO(server)
 
 const command = argv._.shift() as string
@@ -28,18 +23,6 @@ const wrapper = new Wrapper({
   args: argv._
 })
 const messenger = new Messenger(io, wrapper, argv.password)
-
-app.get('/console', (req, res) => {
-  if (req.query.password === argv.password) {
-    res.send({
-      messages: messenger.messages
-    })
-  } else {
-    res.status(403).send({
-      error: 'Password required.'
-    })
-  }
-})
 
 server.listen(process.env.PORT || 8999, () => {
   const addrInfo = server.address() as AddressInfo

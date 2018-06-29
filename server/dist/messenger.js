@@ -23,7 +23,7 @@ class Messenger {
             client.on('auth', (password) => {
                 if (this.auth(client, password)) {
                     client.join('authorized');
-                    client.emit('authsuccess');
+                    client.emit('authsuccess', this.messages);
                 }
                 else {
                     client.emit('authfail');

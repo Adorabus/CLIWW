@@ -12,7 +12,6 @@
 <script>
 import Auth from '@/components/Auth'
 import * as io from 'socket.io-client'
-import {getOldMessages} from '@/services/ConsoleService'
 
 export default {
   name: 'console',
@@ -68,17 +67,10 @@ export default {
     this.socket.on('message', (data) => {
       this.messages.push(data)
     })
-    this.socket.on('authsuccess', async () => {
+    this.socket.on('authsuccess', async (oldMessages) => {
       console.log('Authentication success!')
+      this.messages = oldMessages
       this.authorized = true
-
-      try {
-        const response = await getOldMessages(this.lastPassword)
-        this.messages = response.data.messages
-      } catch (error) {
-        console.error('Failed to pull old messages.')
-        console.error(error)
-      }
     })
     this.socket.on('authfail', () => {
       console.log('Authentication failed!')
