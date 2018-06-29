@@ -2,6 +2,6 @@ import axios from 'axios'
 
 export default () => {
   return axios.create({
-    baseURL: 'http://x.adorab.us:8999/'
+    baseURL: 'http://localhost:8999/'
   })
 }

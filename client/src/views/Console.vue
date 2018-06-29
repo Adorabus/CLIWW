@@ -1,5 +1,6 @@
 <template lang="pug">
   div
+    auth(@submit='sendAuth', :show='!authorized')
     ul.output-log(v-chat-scroll)
       li.message(v-for='message in messages', :class='"message-" + messageClass[message.type]') {{ message.content }}
     input.command-input(
@@ -9,23 +10,30 @@
 </template>
 
 <script>
-import Vue from 'vue'
+import Auth from '@/components/Auth'
 import * as io from 'socket.io-client'
 import {getOldMessages} from '@/services/ConsoleService'
 
-export default Vue.extend({
+export default {
   name: 'console',
+  components: {
+    Auth
+  },
   data () {
     return {
       input: '',
       messages: [],
       history: [],
       historyPosition: 0,
+      authorized: false,
       socket: null,
       messageClass: ['plain', 'error', 'command']
     }
   },
   methods: {
+    sendAuth (password) {
+      this.socket.emit('auth', password)
+    },
     send () {
       if (this.input.trim().length === 0) return
       this.socket.emit('command', this.input)
@@ -62,12 +70,19 @@ export default Vue.extend({
       console.error(error)
     }
 
-    this.socket = io('x.adorab.us:8999')
+    this.socket = io('localhost:8999')
     this.socket.on('message', (data) => {
       this.messages.push(data)
     })
+    this.socket.on('authsuccess', () => {
+      console.log('Authentication success!')
+      this.authorized = true
+    })
+    this.socket.on('authfail', () => {
+      console.log('Authentication failed!')
+    })
   }
-})
+}
 </script>
 
 <style lang="scss">
@@ -98,6 +113,8 @@ export default Vue.extend({
 }
 .command-input {
   width: 800px;
+}
+input[type=text], input[type=password] {
   height: 40px;
   padding: 5px;
   font-size: 12pt;

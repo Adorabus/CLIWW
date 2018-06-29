@@ -1,6 +1,7 @@
 import * as express from 'express'
 import * as http from 'http'
 import * as socketIO from 'socket.io'
+import * as cors from 'cors'
 import Wrapper from './wrapper'
 import Messenger from './messenger'
 import {AddressInfo} from 'net'
@@ -16,15 +17,17 @@ const argv = yargs
   .argv
 
 const app = express()
+app.use(cors())
+
 const server = http.createServer(app)
 const io = socketIO(server)
 
 const command = argv._.shift() as string
 const wrapper = new Wrapper({
   command,
-  args: argv.__
+  args: argv._
 })
-const messenger = new Messenger(io, wrapper)
+const messenger = new Messenger(io, wrapper, argv.password)
 
 app.get('/console', (req, res) => {
   res.send({
