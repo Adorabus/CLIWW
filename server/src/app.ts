@@ -30,9 +30,15 @@ const wrapper = new Wrapper({
 const messenger = new Messenger(io, wrapper, argv.password)
 
 app.get('/console', (req, res) => {
-  res.send({
-    messages: messenger.messages
-  })
+  if (req.query.password === argv.password) {
+    res.send({
+      messages: messenger.messages
+    })
+  } else {
+    res.status(403).send({
+      error: 'Password required.'
+    })
+  }
 })
 
 server.listen(process.env.PORT || 8999, () => {

@@ -70,15 +70,12 @@ class Messenger {
         const ip = client.client.conn.remoteAddress;
         // are they banned?
         if (ip in this.bans && minutesAgo(this.bans[ip]) < 10) {
-            console.log('banned');
             return false;
         }
         // check password
         if (password === this.password) {
-            console.log(`${password} === ${this.password}`);
             return true;
         }
-        console.log('password fail');
         // make space to store failed attempts
         if (!this.failedAuths[ip])
             this.failedAuths[ip] = [];

@@ -26,6 +26,7 @@ export default {
       history: [],
       historyPosition: 0,
       authorized: false,
+      lastPassword: '',
       socket: null,
       messageClass: ['plain', 'error', 'command']
     }
@@ -33,6 +34,7 @@ export default {
   methods: {
     sendAuth (password) {
       this.socket.emit('auth', password)
+      this.lastPassword = password
     },
     send () {
       if (this.input.trim().length === 0) return
@@ -62,21 +64,21 @@ export default {
     }
   },
   async mounted () {
-    try {
-      const response = await getOldMessages()
-      this.messages = response.data.messages
-    } catch (error) {
-      console.error('Failed to pull old messages.')
-      console.error(error)
-    }
-
     this.socket = io('localhost:8999')
     this.socket.on('message', (data) => {
       this.messages.push(data)
     })
-    this.socket.on('authsuccess', () => {
+    this.socket.on('authsuccess', async () => {
       console.log('Authentication success!')
       this.authorized = true
+
+      try {
+        const response = await getOldMessages(this.lastPassword)
+        this.messages = response.data.messages
+      } catch (error) {
+        console.error('Failed to pull old messages.')
+        console.error(error)
+      }
     })
     this.socket.on('authfail', () => {
       console.log('Authentication failed!')

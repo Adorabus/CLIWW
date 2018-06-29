@@ -2,7 +2,7 @@
   transition(name='slide-fade' mode='out-in')
     .auth-container(v-if='show')
       .auth-form
-        p(style='margin-top: 0') Provide the password.
+        p(style='margin-top: 0') Password Required
         input(type='password', v-model='password', @keydown.enter.prevent='submit', autofocus)
 </template>
 
