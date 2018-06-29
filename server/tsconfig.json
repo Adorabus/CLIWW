@@ -9,8 +9,7 @@
       "node_modules/@types"
     ],
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "baseUrl": "src"
+    "experimentalDecorators": true
   },
   "compileOnSave": true,
   "exclude": [
