@@ -4,9 +4,7 @@ import * as socketIO from 'socket.io'
 import * as bodyParser from 'body-parser'
 import Wrapper from './wrapper'
 import Messenger from './messenger'
-import { AddressInfo } from 'net'
-import router from './router'
-import database from './database'
+import {AddressInfo} from 'net'
 
 const app = express()
 const server = http.createServer(app)
@@ -26,14 +24,13 @@ const command = args.shift() as string
 const wrapper = new Wrapper({command, args})
 const messenger = new Messenger(io, wrapper)
 
-router(app, messenger)
-database()
-  .then(() => {
-    server.listen(process.env.PORT || 8999, () => {
-      const addrInfo = server.address() as AddressInfo
-      console.log(`Listening on port ${addrInfo.port}.`)
-    })
+app.get('/console', (req, res) => {
+  res.send({
+    messages: messenger.messages
   })
-  .catch((err) => {
-    console.error(err)
-  })
+})
+
+server.listen(process.env.PORT || 8999, () => {
+  const addrInfo = server.address() as AddressInfo
+  console.log(`Listening on port ${addrInfo.port}.`)
+})
