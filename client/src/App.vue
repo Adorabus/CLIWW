@@ -87,9 +87,6 @@ export default {
       this.socket = io('localhost:8999')
       this.socket.on('message', (data) => {
         this.messages.push(data)
-        if ('isAlive' in data) {
-          this.isAlive = data.isAlive
-        }
       })
       this.socket.on('authsuccess', async (data) => {
         console.log('Authentication success!')
@@ -114,6 +111,9 @@ export default {
       this.socket.on('disconnect', () => {
         console.log('Disconnected!')
         this.isConnected = false
+      })
+      this.socket.on('serverstop', () => {
+        this.isAlive = false
       })
       if (localStorage.getItem('password')) {
         this.sendAuth(localStorage.getItem('password'))

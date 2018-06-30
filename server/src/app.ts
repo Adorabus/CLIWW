@@ -1,7 +1,7 @@
 import * as http from 'http'
 import * as socketIO from 'socket.io'
 import Wrapper from './wrapper'
-import Messenger from './messenger'
+import {Messenger, MessengerOptions} from './messenger'
 import {AddressInfo} from 'net'
 import * as yargs from 'yargs'
 
@@ -11,6 +11,9 @@ const argv = yargs
     alias: 'p',
     describe: 'Console access password.'
   })
+  .boolean('v')
+  .alias('v', 'verbose')
+  .describe('v', 'Display additional information.')
   .demandCommand(1, 'No command specified.')
   .argv
 
@@ -22,7 +25,7 @@ const wrapper = new Wrapper({
   command,
   args: argv._
 })
-const messenger = new Messenger(io, wrapper, argv.password)
+const messenger = new Messenger(io, wrapper, argv as MessengerOptions)
 
 server.listen(process.env.PORT || 8999, () => {
   const addrInfo = server.address() as AddressInfo

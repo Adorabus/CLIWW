@@ -11,6 +11,9 @@ const argv = yargs
     alias: 'p',
     describe: 'Console access password.'
 })
+    .boolean('v')
+    .alias('v', 'verbose')
+    .describe('v', 'Display additional information.')
     .demandCommand(1, 'No command specified.')
     .argv;
 const server = http.createServer();
@@ -20,7 +23,7 @@ const wrapper = new wrapper_1.default({
     command,
     args: argv._
 });
-const messenger = new messenger_1.default(io, wrapper, argv.password);
+const messenger = new messenger_1.Messenger(io, wrapper, argv);
 server.listen(process.env.PORT || 8999, () => {
     const addrInfo = server.address();
     console.log(`Listening on port ${addrInfo.port}.`);

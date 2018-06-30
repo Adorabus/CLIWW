@@ -1,39 +1,42 @@
 import * as SocketIO from 'socket.io'
 import Wrapper from './wrapper'
 
-enum MessageType {
+export enum MessageType {
   Plain,
   Error,
   Command,
   Info
 }
 
-interface Message {
+export interface Message {
   content: string
-  type: MessageType,
-  isAlive?: boolean
+  type: MessageType
+}
+
+export interface MessengerOptions {
+  password?: string
+  verbose?: boolean
 }
 
 function minutesAgo (timestamp: number) {
   return (Date.now() - timestamp) / 1000 / 60
 }
 
-export default class Messenger {
+export class Messenger {
   private io: SocketIO.Server
   private wrapper: Wrapper
-  private password?: string
+  private options: MessengerOptions
   private failedAuths: {[index: string] : number[]} = {}
   private bans: {[index: string] : number} = {}
   messages: Message[] = []
 
-  constructor (io: SocketIO.Server, wrapper: Wrapper, password?: string) {
+  constructor (io: SocketIO.Server, wrapper: Wrapper, options: MessengerOptions = {}) {
     this.io = io
     this.wrapper = wrapper
-    this.password = password
-
+    this.options = options
     io.on('connection', (client: SocketIO.Socket) => {
       const ipAddr = client.client.conn.remoteAddress
-      console.log(`Connection from: ${ipAddr}`)
+      this.log(`Connection from: ${ipAddr}`)
       client.emit('authrequest')
 
       client.on('auth', (password) => {
@@ -43,7 +46,7 @@ export default class Messenger {
             messages: this.messages,
             isAlive: this.wrapper.isAlive()
           })
-          console.log(`[${ipAddr}] Authenticated.`)
+          this.log(`[${ipAddr}] Authenticated.`)
         } else {
           client.emit('authfail')
         }
@@ -56,13 +59,13 @@ export default class Messenger {
         }
         if (command.trim().length === 0) return
 
-        this.broadcast({
+        this.broadcastMessage({
           content: `[${ipAddr}]> ${command}`,
           type: MessageType.Command
         })
 
         if (!this.wrapper.send(`${command}\n`)) {
-          this.broadcast({
+          this.broadcastMessage({
             content: 'Server is not running!',
             type: MessageType.Error
           })
@@ -70,13 +73,13 @@ export default class Messenger {
       })
 
       client.on('disconnect', () => {
-        console.log(`${ipAddr} disconnected.`)
+        this.log(`${ipAddr} disconnected.`)
       })
     })
 
     wrapper.wrapped.stdout
       .on('data', (data) => {
-        this.broadcast({
+        this.broadcastMessage({
           content: data as string,
           type: MessageType.Plain
         })
@@ -84,7 +87,7 @@ export default class Messenger {
 
     wrapper.wrapped.stderr
       .on('data', (data) => {
-        this.broadcast({
+        this.broadcastMessage({
           content: data as string,
           type: MessageType.Plain
         })
@@ -92,24 +95,23 @@ export default class Messenger {
 
     wrapper.wrapped
       .on('exit', (code) => {
-        let verb = 'exited'
-        let type = MessageType.Info
-
-        if (code !== 0) {
-          verb = 'crashed'
-          type = MessageType.Error
+        this.broadcast('serverstop')
+        if (code === 0) {
+          this.broadcastMessage({
+            content: 'The server has exited.',
+            type: MessageType.Info
+          })
+        } else {
+          this.broadcastMessage({
+            content: `The server has crashed. [Code ${code}]`,
+            type: MessageType.Error
+          })
         }
-
-        this.broadcast({
-          content: `The process has ${verb}.`,
-          type,
-          isAlive: false
-        })
       })
   }
 
   auth (client: SocketIO.Socket, password: string) {
-    if (!this.password) return true
+    if (!this.options.password) return true
     const ip = client.client.conn.remoteAddress
 
     // are they banned?
@@ -118,7 +120,7 @@ export default class Messenger {
     }
 
     // check password
-    if (password === this.password) {
+    if (password === this.options.password) {
       return true
     }
 
@@ -131,11 +133,25 @@ export default class Messenger {
     this.failedAuths[ip] = this.failedAuths[ip].filter(failTime => minutesAgo(failTime) < 1)
     if (this.failedAuths[ip].length > 5) {
       this.bans[ip] = Date.now()
+      this.broadcastMessage({
+        content: `Client [${ip}] has been banned for 10 minutes.`,
+        type: MessageType.Info
+      })
     }
   }
 
-  broadcast (message: Message) {
+  broadcastMessage (message: Message) {
     this.messages.push(message)
     this.io.sockets.in('authorized').emit('message', message)
+  }
+
+  broadcast (event: string, data?: any) {
+    this.io.sockets.in('authorized').emit(event, data)
+  }
+
+  private log (...args: any[]) {
+    if (this.options.verbose) {
+      console.log(args)
+    }
   }
 }
