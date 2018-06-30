@@ -18,6 +18,9 @@ class Wrapper {
             return false;
         }
     }
+    isAlive() {
+        return this.wrapped.stdin.writable;
+    }
 }
 exports.default = Wrapper;
 //# sourceMappingURL=wrapper.js.map

@@ -1,11 +1,11 @@
 <template lang="pug">
   #app
-    auth(@submit='sendAuth', :show='!authenticated && connected')
+    auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
     #console
       ul.output-log(v-chat-scroll)
         li.message(v-for='message in messages', :class='"message-" + messageClass[message.type]') {{ message.content }}
       input.command-input(
-        type='text', v-model='input', ref='input'
+        type='text', v-model='input', autofocus,
         @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
       )
 </template>
@@ -25,11 +25,12 @@ export default {
       messages: [],
       history: [],
       historyPosition: 0,
-      authenticated: false,
-      connected: false,
+      isAuthenticated: false,
+      isConnected: false,
+      isAlive: false,
       lastPassword: '',
       socket: null,
-      messageClass: ['plain', 'error', 'command']
+      messageClass: ['plain', 'error', 'command', 'info']
     }
   },
   methods: {
@@ -61,8 +62,9 @@ export default {
     statusChange () {
       const link = document.querySelector("link[rel*='icon']")
       let name = 'favicon'
-      if (this.connected) name = 'connected'
-      if (!this.authenticated) name = 'needauth'
+      if (this.isConnected) name = 'connected'
+      if (!this.isAlive) name = 'stopped'
+      if (!this.isAuthenticated) name = 'needauth'
       link.href = `${name}.ico`
     }
   },
@@ -70,10 +72,13 @@ export default {
     history () {
       this.historyPosition = this.history.length
     },
-    connected () {
+    isConnected () {
       this.statusChange()
     },
-    authenticated () {
+    isAuthenticated () {
+      this.statusChange()
+    },
+    isAlive () {
       this.statusChange()
     }
   },
@@ -82,19 +87,21 @@ export default {
       this.socket = io('localhost:8999')
       this.socket.on('message', (data) => {
         this.messages.push(data)
+        if ('isAlive' in data) {
+          this.isAlive = data.isAlive
+        }
       })
-      this.socket.on('authsuccess', async (oldMessages) => {
+      this.socket.on('authsuccess', async (data) => {
         console.log('Authentication success!')
-        this.messages = oldMessages
-        this.authenticated = true
+        this.messages = data.messages
+        this.isAlive = data.isAlive
+        this.isAuthenticated = true
         localStorage.setItem('password', this.lastPassword)
-        this.$refs.input.focus()
       })
       this.socket.on('authfail', () => {
         console.log('Authentication failed!')
         localStorage.removeItem('password')
-        this.$refs.input.blur()
-        this.authenticated = null
+        this.isAuthenticated = null
       })
       this.socket.on('authrequest', () => {
         console.log('Reauthenticating...')
@@ -102,11 +109,11 @@ export default {
       })
       this.socket.on('connect', () => {
         console.log('Connected!')
-        this.connected = true
+        this.isConnected = true
       })
       this.socket.on('disconnect', () => {
         console.log('Disconnected!')
-        this.connected = false
+        this.isConnected = false
       })
       if (localStorage.getItem('password')) {
         this.sendAuth(localStorage.getItem('password'))
@@ -187,6 +194,9 @@ input[type=text], input[type=password] {
 }
 .message-error {
   color: rgb(255, 95, 55);
+}
+.message-info {
+  color: #00ccff;
 }
 .message-command {
   color: rgb(164, 255, 44);

@@ -5,6 +5,7 @@ var MessageType;
     MessageType[MessageType["Plain"] = 0] = "Plain";
     MessageType[MessageType["Error"] = 1] = "Error";
     MessageType[MessageType["Command"] = 2] = "Command";
+    MessageType[MessageType["Info"] = 3] = "Info";
 })(MessageType || (MessageType = {}));
 function minutesAgo(timestamp) {
     return (Date.now() - timestamp) / 1000 / 60;
@@ -24,7 +25,10 @@ class Messenger {
             client.on('auth', (password) => {
                 if (this.auth(client, password)) {
                     client.join('authorized');
-                    client.emit('authsuccess', this.messages);
+                    client.emit('authsuccess', {
+                        messages: this.messages,
+                        isAlive: this.wrapper.isAlive()
+                    });
                     console.log(`[${ipAddr}] Authenticated.`);
                 }
                 else {
@@ -65,6 +69,20 @@ class Messenger {
             this.broadcast({
                 content: data,
                 type: MessageType.Plain
+            });
+        });
+        wrapper.wrapped
+            .on('exit', (code) => {
+            let verb = 'exited';
+            let type = MessageType.Info;
+            if (code !== 0) {
+                verb = 'crashed';
+                type = MessageType.Error;
+            }
+            this.broadcast({
+                content: `The process has ${verb}.`,
+                type,
+                isAlive: false
             });
         });
     }

@@ -24,4 +24,8 @@ export default class Wrapper {
       return false
     }
   }
+
+  isAlive () {
+    return this.wrapped.stdin.writable
+  }
 }

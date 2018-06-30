@@ -4,12 +4,14 @@ import Wrapper from './wrapper'
 enum MessageType {
   Plain,
   Error,
-  Command
+  Command,
+  Info
 }
 
 interface Message {
   content: string
-  type: MessageType
+  type: MessageType,
+  isAlive?: boolean
 }
 
 function minutesAgo (timestamp: number) {
@@ -37,7 +39,10 @@ export default class Messenger {
       client.on('auth', (password) => {
         if (this.auth(client, password)) {
           client.join('authorized')
-          client.emit('authsuccess', this.messages)
+          client.emit('authsuccess', {
+            messages: this.messages,
+            isAlive: this.wrapper.isAlive()
+          })
           console.log(`[${ipAddr}] Authenticated.`)
         } else {
           client.emit('authfail')
@@ -82,6 +87,23 @@ export default class Messenger {
         this.broadcast({
           content: data as string,
           type: MessageType.Plain
+        })
+      })
+
+    wrapper.wrapped
+      .on('exit', (code) => {
+        let verb = 'exited'
+        let type = MessageType.Info
+
+        if (code !== 0) {
+          verb = 'crashed'
+          type = MessageType.Error
+        }
+
+        this.broadcast({
+          content: `The process has ${verb}.`,
+          type,
+          isAlive: false
         })
       })
   }
