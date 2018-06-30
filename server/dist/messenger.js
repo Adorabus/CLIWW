@@ -20,18 +20,22 @@ class Messenger {
         io.on('connection', (client) => {
             const ipAddr = client.client.conn.remoteAddress;
             console.log(`Connection from: ${ipAddr}`);
+            client.emit('authrequest');
             client.on('auth', (password) => {
                 if (this.auth(client, password)) {
                     client.join('authorized');
                     client.emit('authsuccess', this.messages);
+                    console.log(`[${ipAddr}] Authenticated.`);
                 }
                 else {
                     client.emit('authfail');
                 }
             });
             client.on('command', (command) => {
-                if (!('authorized' in client.rooms))
+                if (!('authorized' in client.rooms)) {
+                    client.emit('authrequest');
                     return;
+                }
                 if (command.trim().length === 0)
                     return;
                 this.broadcast({
@@ -46,7 +50,7 @@ class Messenger {
                 }
             });
             client.on('disconnect', () => {
-                console.log(`${client.id} disconnected.`);
+                console.log(`${ipAddr} disconnected.`);
             });
         });
         wrapper.wrapped.stdout

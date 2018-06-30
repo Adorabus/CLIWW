@@ -36,10 +36,11 @@ export default {
   width: 100%;
   height: 100%;
   background: rgba(30, 30, 30, 0.8);
+  backdrop-filter: blur(4px);
 }
 .auth-form {
   background: rgb(32, 32, 32);
-  border: 1px solid rgb(53, 53, 53);
+  border: $border;
   padding: 20px;
   position: relative;
   margin: 0 auto;
