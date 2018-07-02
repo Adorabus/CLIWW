@@ -1,5 +1,6 @@
 import * as child from 'child_process'
 import {EventEmitter} from 'events'
+import {secondsAgo} from './util'
 
 export interface WrapperOptions {
   keepalive?: boolean
@@ -7,6 +8,7 @@ export interface WrapperOptions {
 
 export class Wrapper extends EventEmitter {
   wrapped?: child.ChildProcess
+  startedAt?: Date
   command: string
   args: string[]
   options: WrapperOptions
@@ -24,19 +26,26 @@ export class Wrapper extends EventEmitter {
       this.stopProcess(true)
     }
 
+    this.startedAt = new Date()
+
     const spawned = child.spawn(this.command, this.args)
     spawned.stdin.setDefaultEncoding('utf-8')
     spawned.stdout.setEncoding('utf-8')
     spawned.stderr.setEncoding('utf-8')
 
-    if (this.options.keepalive) {
-      spawned.on('exit', () => {
-        setTimeout(() => {
+    spawned.on('exit', (code, signal) => {
+      this._isAlive = false
+      this.emit('exit', code, signal)
+
+      if (this.options.keepalive && this.startedAt) {
+        if (secondsAgo(this.startedAt.valueOf()) > 5) {
           this.emit('message', 'Restarting wrapped process...')
           this.startProcess()
-        }, 1000)
-      })
-    }
+        } else {
+          this.emit('message', 'Process exited too quickly. Keepalive ignored.')
+        }
+      }
+    })
 
     this.wrapped = spawned
     this._isAlive = true

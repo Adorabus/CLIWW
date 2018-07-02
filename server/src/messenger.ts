@@ -1,6 +1,7 @@
 import * as SocketIO from 'socket.io'
 import {Wrapper} from './wrapper'
 import {ChildProcess} from 'child_process'
+import {minutesAgo} from './util'
 
 export enum MessageType {
   Plain,
@@ -18,9 +19,6 @@ export interface MessengerOptions {
   password?: string
 }
 
-function minutesAgo (timestamp: number) {
-  return (Date.now() - timestamp) / 1000 / 60
-}
 
 export class Messenger {
   private io: SocketIO.Server
@@ -94,30 +92,44 @@ export class Messenger {
           })
         })
 
-      wrapped
+      wrapper
         .on('exit', (code) => {
           this.broadcast('serverstop')
           if (code === 0) {
+            const content = 'The server has exited.'
             this.broadcastMessage({
-              content: 'The server has exited.',
+              content,
               type: MessageType.Info
             })
+            this.log(content)
           } else {
+            const content = `The server has crashed. [Code ${code}]`
             this.broadcastMessage({
-              content: `The server has crashed. [Code ${code}]`,
+              content,
               type: MessageType.Error
             })
+            this.log(content)
           }
         })
     })
 
-    wrapper.on('message', (content: string) => {
-      this.log(content)
-      this.broadcastMessage({
-        content,
-        type: MessageType.Info
+    wrapper
+      .on('start', (content: string) => {
+        this.log(content)
+        this.broadcastMessage({
+          content,
+          type: MessageType.Info
+        })
       })
-    })
+
+    wrapper
+      .on('message', (content: string) => {
+        this.log(content)
+        this.broadcastMessage({
+          content,
+          type: MessageType.Info
+        })
+      })
   }
 
   auth (client: SocketIO.Socket, password: string) {

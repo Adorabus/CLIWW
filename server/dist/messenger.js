@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const util_1 = require("./util");
 var MessageType;
 (function (MessageType) {
     MessageType[MessageType["Plain"] = 0] = "Plain";
@@ -7,9 +8,6 @@ var MessageType;
     MessageType[MessageType["Command"] = 2] = "Command";
     MessageType[MessageType["Info"] = 3] = "Info";
 })(MessageType = exports.MessageType || (exports.MessageType = {}));
-function minutesAgo(timestamp) {
-    return (Date.now() - timestamp) / 1000 / 60;
-}
 class Messenger {
     constructor(io, wrapper, options = {}) {
         this.failedAuths = {};
@@ -72,24 +70,29 @@ class Messenger {
                     type: MessageType.Plain
                 });
             });
-            wrapped
+            wrapper
                 .on('exit', (code) => {
                 this.broadcast('serverstop');
                 if (code === 0) {
+                    const content = 'The server has exited.';
                     this.broadcastMessage({
-                        content: 'The server has exited.',
+                        content,
                         type: MessageType.Info
                     });
+                    this.log(content);
                 }
                 else {
+                    const content = `The server has crashed. [Code ${code}]`;
                     this.broadcastMessage({
-                        content: `The server has crashed. [Code ${code}]`,
+                        content,
                         type: MessageType.Error
                     });
+                    this.log(content);
                 }
             });
         });
-        wrapper.on('message', (content) => {
+        wrapper
+            .on('message', (content) => {
             this.log(content);
             this.broadcastMessage({
                 content,
@@ -102,7 +105,7 @@ class Messenger {
             return true;
         const ip = client.client.conn.remoteAddress;
         // are they banned?
-        if (ip in this.bans && minutesAgo(this.bans[ip]) < 10) {
+        if (ip in this.bans && util_1.minutesAgo(this.bans[ip]) < 10) {
             return false;
         }
         // check password
@@ -114,7 +117,7 @@ class Messenger {
             this.failedAuths[ip] = [];
         this.failedAuths[ip].push(Date.now());
         // keep only failed auths from the last minute
-        this.failedAuths[ip] = this.failedAuths[ip].filter(failTime => minutesAgo(failTime) < 1);
+        this.failedAuths[ip] = this.failedAuths[ip].filter(failTime => util_1.minutesAgo(failTime) < 1);
         if (this.failedAuths[ip].length > 5) {
             this.bans[ip] = Date.now();
             const banMessage = `Client [${ip}] has been banned for 10 minutes.`;
