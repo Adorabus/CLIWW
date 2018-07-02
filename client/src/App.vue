@@ -1,13 +1,18 @@
 <template lang="pug">
-  #app
-    auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
-    #console
-      ul.output-log(v-chat-scroll)
-        li.message(v-for='message in messages', :class='"message-" + messageClass[message.type]') {{ message.content }}
-      input.command-input(
-        type='text', v-model='input', autofocus,
-        @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
-      )
+  .container
+    #app
+      auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
+      #console
+        ul.output-log(v-chat-scroll='{always: false, smooth: true}')
+          li.beginning Beginning of Log
+          li.message(v-for='message in messages', :class='getMessageClass(message)') {{ message.content }}
+        input.command-input(
+          type='text', v-model='input', autofocus,
+          @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
+        )
+      #settings
+        label(for='word-wrap') Word Wrap
+        input#word-wrap(type='checkbox', v-model='settings.wordWrap')
 </template>
 
 <script>
@@ -22,6 +27,9 @@ export default {
   data () {
     return {
       input: '',
+      settings: {
+        wordWrap: true
+      },
       messages: [],
       history: [],
       historyPosition: 0,
@@ -68,6 +76,13 @@ export default {
         if (!this.isAuthenticated) name = 'needauth'
       }
       link.href = `${name}.ico`
+    },
+    getMessageClass (message) {
+      const obj = {
+        'no-wrap': !this.settings.wordWrap
+      }
+      obj['message-' + this.messageClass[message.type]] = true
+      return obj
     }
   },
   watch: {
@@ -82,10 +97,21 @@ export default {
     },
     isAlive () {
       this.statusChange()
+    },
+    settings: {
+      handler () {
+        localStorage.setItem('settings', JSON.stringify(this.settings))
+      },
+      deep: true
     }
   },
   async mounted () {
     this.$nextTick(() => {
+      const loadedSettings = localStorage.getItem('settings')
+      if (loadedSettings) {
+        this.settings = JSON.parse(loadedSettings)
+      }
+
       this.socket = io('localhost:8999')
       this.socket.on('message', (data) => {
         this.messages.push(data)
@@ -126,19 +152,32 @@ export default {
 </script>
 
 <style lang="scss">
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: center;
+  width: 100%;
+}
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  width: 100%;
-  height: 100%;
 }
 #console {
   display: flex;
   flex-direction: column;
+}
+#settings {
+  width: 800px;
+  height: 200px;
+  border: $border;
+  margin-top: 20px;
+  box-sizing: border-box;
 }
 html, body {
   margin: 0;
@@ -174,6 +213,7 @@ textarea, select, input, button {
   overflow-y: scroll;
   &::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
   &::-webkit-scrollbar-track {
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
@@ -194,6 +234,12 @@ input[type=text], input[type=password] {
   box-sizing: border-box;
   margin: 0;
 }
+label {
+  font-size: 10pt;
+}
+.message {
+  word-wrap: break-word;
+}
 .message-error {
   color: rgb(255, 95, 55);
 }
@@ -205,5 +251,18 @@ input[type=text], input[type=password] {
 }
 .message-stderr {
   color: rgb(255, 29, 78);
+}
+.beginning {
+  background: rgb(255, 81, 0);
+  text-align: center;
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 10pt;
+  padding: 4px;
+  line-height: 13px;
+}
+.no-wrap {
+  word-wrap: none;
+  white-space: nowrap;
 }
 </style>

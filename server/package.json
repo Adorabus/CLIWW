@@ -9,11 +9,11 @@
   "author": "Adorabus",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^10.5.0",
     "socket.io": "^2.1.1",
     "yargs": "^12.0.1"
   },
   "devDependencies": {
+    "@types/node": "^10.5.0",
     "@types/socket.io": "^1.4.36",
     "@types/yargs": "^11.0.0"
   }

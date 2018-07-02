@@ -8,12 +8,10 @@ const yargs = require("yargs");
 const argv = yargs
     .usage('Usage: $0 [options] <command>')
     .option('password', {
-    alias: 'p',
     describe: 'Console access password.'
 })
-    .boolean('k')
-    .alias('k', 'keepalive')
-    .describe('k', 'Restart the process if it exits.')
+    .boolean('keepalive')
+    .describe('keepalive', 'Restart the process if it exits.')
     .demandCommand(1, 'No command specified.')
     .argv;
 const server = http.createServer();
