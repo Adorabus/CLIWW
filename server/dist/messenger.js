@@ -78,18 +78,20 @@ class Messenger {
                     this.broadcastMessage({
                         content,
                         type: MessageType.Info
-                    });
-                    this.log(content);
+                    }, true);
                 }
                 else {
                     const content = `The server has crashed. [Code ${code}]`;
                     this.broadcastMessage({
                         content,
                         type: MessageType.Error
-                    });
-                    this.log(content);
+                    }, true);
                 }
             });
+            this.broadcastMessage({
+                content: 'Process started.',
+                type: MessageType.Info
+            }, true);
         });
         wrapper
             .on('message', (content) => {
@@ -128,9 +130,12 @@ class Messenger {
             });
         }
     }
-    broadcastMessage(message) {
+    broadcastMessage(message, log) {
         this.messages.push(message);
         this.io.sockets.in('authorized').emit('message', message);
+        if (log) {
+            this.log(message.content);
+        }
     }
     broadcast(event, data) {
         this.io.sockets.in('authorized').emit(event, data);

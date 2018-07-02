@@ -100,27 +100,21 @@ export class Messenger {
             this.broadcastMessage({
               content,
               type: MessageType.Info
-            })
-            this.log(content)
+            }, true)
           } else {
             const content = `The server has crashed. [Code ${code}]`
             this.broadcastMessage({
               content,
               type: MessageType.Error
-            })
-            this.log(content)
+            }, true)
           }
         })
-    })
 
-    wrapper
-      .on('start', (content: string) => {
-        this.log(content)
         this.broadcastMessage({
-          content,
+          content: 'Process started.',
           type: MessageType.Info
-        })
-      })
+        }, true)
+    })
 
     wrapper
       .on('message', (content: string) => {
@@ -164,9 +158,12 @@ export class Messenger {
     }
   }
 
-  broadcastMessage (message: Message) {
+  broadcastMessage (message: Message, log?: boolean) {
     this.messages.push(message)
     this.io.sockets.in('authorized').emit('message', message)
+    if (log) {
+      this.log(message.content)
+    }
   }
 
   broadcast (event: string, data?: any) {
