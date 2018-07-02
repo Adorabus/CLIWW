@@ -70,36 +70,35 @@ class Messenger {
                     type: MessageType.Plain
                 });
             });
-            wrapper
-                .on('exit', (code) => {
-                this.broadcast('serverstop');
-                if (code === 0) {
-                    const content = 'The server has exited.';
-                    this.broadcastMessage({
-                        content,
-                        type: MessageType.Info
-                    }, true);
-                }
-                else {
-                    const content = `The server has crashed. [Code ${code}]`;
-                    this.broadcastMessage({
-                        content,
-                        type: MessageType.Error
-                    }, true);
-                }
-            });
             this.broadcastMessage({
                 content: 'Process started.',
                 type: MessageType.Info
             }, true);
         });
         wrapper
+            .on('exit', (code) => {
+            this.broadcast('serverstop');
+            if (code === 0) {
+                const content = 'The server has exited.';
+                this.broadcastMessage({
+                    content,
+                    type: MessageType.Info
+                }, true);
+            }
+            else {
+                const content = `The server has crashed. [Code ${code}]`;
+                this.broadcastMessage({
+                    content,
+                    type: MessageType.Error
+                }, true);
+            }
+        });
+        wrapper
             .on('message', (content) => {
-            this.log(content);
             this.broadcastMessage({
                 content,
                 type: MessageType.Info
-            });
+            }, true);
         });
     }
     auth(client, password) {
@@ -122,12 +121,10 @@ class Messenger {
         this.failedAuths[ip] = this.failedAuths[ip].filter(failTime => util_1.minutesAgo(failTime) < 1);
         if (this.failedAuths[ip].length > 5) {
             this.bans[ip] = Date.now();
-            const banMessage = `Client [${ip}] has been banned for 10 minutes.`;
-            this.log(banMessage);
             this.broadcastMessage({
-                content: banMessage,
+                content: `Client [${ip}] has been banned for 10 minutes.`,
                 type: MessageType.Info
-            });
+            }, true);
         }
     }
     broadcastMessage(message, log) {
