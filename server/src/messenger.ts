@@ -1,5 +1,6 @@
 import * as SocketIO from 'socket.io'
-import Wrapper from './wrapper'
+import {Wrapper} from './wrapper'
+import {ChildProcess} from 'child_process'
 
 export enum MessageType {
   Plain,
@@ -15,7 +16,6 @@ export interface Message {
 
 export interface MessengerOptions {
   password?: string
-  verbose?: boolean
 }
 
 function minutesAgo (timestamp: number) {
@@ -36,7 +36,7 @@ export class Messenger {
     this.options = options
     io.on('connection', (client: SocketIO.Socket) => {
       const ipAddr = client.client.conn.remoteAddress
-      this.log(`Connection from: ${ipAddr}`)
+      this.log(`Connection from [${ipAddr}].`)
       client.emit('authrequest')
 
       client.on('auth', (password) => {
@@ -46,7 +46,7 @@ export class Messenger {
             messages: this.messages,
             isAlive: this.wrapper.isAlive()
           })
-          this.log(`[${ipAddr}] Authenticated.`)
+          this.log(`[${ipAddr}] authenticated.`)
         } else {
           client.emit('authfail')
         }
@@ -77,37 +77,47 @@ export class Messenger {
       })
     })
 
-    wrapper.wrapped.stdout
-      .on('data', (data) => {
-        this.broadcastMessage({
-          content: data as string,
-          type: MessageType.Plain
-        })
-      })
-
-    wrapper.wrapped.stderr
-      .on('data', (data) => {
-        this.broadcastMessage({
-          content: data as string,
-          type: MessageType.Plain
-        })
-      })
-
-    wrapper.wrapped
-      .on('exit', (code) => {
-        this.broadcast('serverstop')
-        if (code === 0) {
+    wrapper.on('start', (wrapped: ChildProcess) => {
+      wrapped.stdout
+        .on('data', (data) => {
           this.broadcastMessage({
-            content: 'The server has exited.',
-            type: MessageType.Info
+            content: data as string,
+            type: MessageType.Plain
           })
-        } else {
+        })
+
+      wrapped.stderr
+        .on('data', (data) => {
           this.broadcastMessage({
-            content: `The server has crashed. [Code ${code}]`,
-            type: MessageType.Error
+            content: data as string,
+            type: MessageType.Plain
           })
-        }
+        })
+
+      wrapped
+        .on('exit', (code) => {
+          this.broadcast('serverstop')
+          if (code === 0) {
+            this.broadcastMessage({
+              content: 'The server has exited.',
+              type: MessageType.Info
+            })
+          } else {
+            this.broadcastMessage({
+              content: `The server has crashed. [Code ${code}]`,
+              type: MessageType.Error
+            })
+          }
+        })
+    })
+
+    wrapper.on('message', (content: string) => {
+      this.log(content)
+      this.broadcastMessage({
+        content,
+        type: MessageType.Info
       })
+    })
   }
 
   auth (client: SocketIO.Socket, password: string) {
@@ -133,8 +143,10 @@ export class Messenger {
     this.failedAuths[ip] = this.failedAuths[ip].filter(failTime => minutesAgo(failTime) < 1)
     if (this.failedAuths[ip].length > 5) {
       this.bans[ip] = Date.now()
+      const banMessage = `Client [${ip}] has been banned for 10 minutes.`
+      this.log(banMessage)
       this.broadcastMessage({
-        content: `Client [${ip}] has been banned for 10 minutes.`,
+        content: banMessage,
         type: MessageType.Info
       })
     }
@@ -150,8 +162,6 @@ export class Messenger {
   }
 
   private log (...args: any[]) {
-    if (this.options.verbose) {
-      console.log(args)
-    }
+    console.log(...args)
   }
 }

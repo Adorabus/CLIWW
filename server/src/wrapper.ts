@@ -1,22 +1,57 @@
 import * as child from 'child_process'
+import {EventEmitter} from 'events'
 
-interface LaunchParams {
-  command: string
-  args?: string[]
+export interface WrapperOptions {
+  keepalive?: boolean
 }
 
-export default class Wrapper {
-  wrapped: child.ChildProcess
-  private launchParams: LaunchParams
-  constructor (params: LaunchParams) {
-    this.launchParams = params
-    this.wrapped = child.spawn(params.command, params.args)
-    this.wrapped.stdin.setDefaultEncoding('utf-8')
-    this.wrapped.stdout.setEncoding('utf-8')
-    this.wrapped.stderr.setEncoding('utf-8')
+export class Wrapper extends EventEmitter {
+  wrapped?: child.ChildProcess
+  command: string
+  args: string[]
+  options: WrapperOptions
+  private _isAlive: boolean = false
+
+  constructor (command: string, args: string[] = [], options: WrapperOptions = {}) {
+    super()
+    this.command = command
+    this.args = args
+    this.options = options
+  }
+
+  startProcess () {
+    if (this._isAlive) {
+      this.stopProcess(true)
+    }
+
+    const spawned = child.spawn(this.command, this.args)
+    spawned.stdin.setDefaultEncoding('utf-8')
+    spawned.stdout.setEncoding('utf-8')
+    spawned.stderr.setEncoding('utf-8')
+
+    if (this.options.keepalive) {
+      spawned.on('exit', () => {
+        setTimeout(() => {
+          this.emit('message', 'Restarting wrapped process...')
+          this.startProcess()
+        }, 1000)
+      })
+    }
+
+    this.wrapped = spawned
+    this._isAlive = true
+    this.emit('start', spawned)
+  }
+
+  stopProcess (force: boolean) {
+    if (!this.wrapped) return
+    this.wrapped.kill(force ? 'SIGKILL' : 'SIGINT')
+    this._isAlive = false
+    this.emit('stop')
   }
 
   send (command: string): boolean {
+    if (!this.wrapped) return false
     if (this.wrapped.stdin.writable) {
       this.wrapped.stdin.write(command)
       return true
@@ -26,6 +61,6 @@ export default class Wrapper {
   }
 
   isAlive () {
-    return this.wrapped.stdin.writable
+    return this._isAlive
   }
 }

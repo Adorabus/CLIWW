@@ -11,19 +11,17 @@ const argv = yargs
     alias: 'p',
     describe: 'Console access password.'
 })
-    .boolean('v')
-    .alias('v', 'verbose')
-    .describe('v', 'Display additional information.')
+    .boolean('k')
+    .alias('k', 'keepalive')
+    .describe('k', 'Restart the process if it exits.')
     .demandCommand(1, 'No command specified.')
     .argv;
 const server = http.createServer();
 const io = socketIO(server);
 const command = argv._.shift();
-const wrapper = new wrapper_1.default({
-    command,
-    args: argv._
-});
+const wrapper = new wrapper_1.Wrapper(command, argv._, argv);
 const messenger = new messenger_1.Messenger(io, wrapper, argv);
+wrapper.startProcess();
 server.listen(process.env.PORT || 8999, () => {
     const addrInfo = server.address();
     console.log(`Listening on port ${addrInfo.port}.`);

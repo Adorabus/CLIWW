@@ -1,6 +1,6 @@
 import * as http from 'http'
 import * as socketIO from 'socket.io'
-import Wrapper from './wrapper'
+import {Wrapper, WrapperOptions} from './wrapper'
 import {Messenger, MessengerOptions} from './messenger'
 import {AddressInfo} from 'net'
 import * as yargs from 'yargs'
@@ -11,9 +11,9 @@ const argv = yargs
     alias: 'p',
     describe: 'Console access password.'
   })
-  .boolean('v')
-  .alias('v', 'verbose')
-  .describe('v', 'Display additional information.')
+  .boolean('k')
+  .alias('k', 'keepalive')
+  .describe('k', 'Restart the process if it exits.')
   .demandCommand(1, 'No command specified.')
   .argv
 
@@ -21,11 +21,9 @@ const server = http.createServer()
 const io = socketIO(server)
 
 const command = argv._.shift() as string
-const wrapper = new Wrapper({
-  command,
-  args: argv._
-})
+const wrapper = new Wrapper(command, argv._, argv as WrapperOptions)
 const messenger = new Messenger(io, wrapper, argv as MessengerOptions)
+wrapper.startProcess()
 
 server.listen(process.env.PORT || 8999, () => {
   const addrInfo = server.address() as AddressInfo

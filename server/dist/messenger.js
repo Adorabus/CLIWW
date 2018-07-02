@@ -20,7 +20,7 @@ class Messenger {
         this.options = options;
         io.on('connection', (client) => {
             const ipAddr = client.client.conn.remoteAddress;
-            this.log(`Connection from: ${ipAddr}`);
+            this.log(`Connection from [${ipAddr}].`);
             client.emit('authrequest');
             client.on('auth', (password) => {
                 if (this.auth(client, password)) {
@@ -29,7 +29,7 @@ class Messenger {
                         messages: this.messages,
                         isAlive: this.wrapper.isAlive()
                     });
-                    this.log(`[${ipAddr}] Authenticated.`);
+                    this.log(`[${ipAddr}] authenticated.`);
                 }
                 else {
                     client.emit('authfail');
@@ -57,35 +57,44 @@ class Messenger {
                 this.log(`${ipAddr} disconnected.`);
             });
         });
-        wrapper.wrapped.stdout
-            .on('data', (data) => {
-            this.broadcastMessage({
-                content: data,
-                type: MessageType.Plain
+        wrapper.on('start', (wrapped) => {
+            wrapped.stdout
+                .on('data', (data) => {
+                this.broadcastMessage({
+                    content: data,
+                    type: MessageType.Plain
+                });
+            });
+            wrapped.stderr
+                .on('data', (data) => {
+                this.broadcastMessage({
+                    content: data,
+                    type: MessageType.Plain
+                });
+            });
+            wrapped
+                .on('exit', (code) => {
+                this.broadcast('serverstop');
+                if (code === 0) {
+                    this.broadcastMessage({
+                        content: 'The server has exited.',
+                        type: MessageType.Info
+                    });
+                }
+                else {
+                    this.broadcastMessage({
+                        content: `The server has crashed. [Code ${code}]`,
+                        type: MessageType.Error
+                    });
+                }
             });
         });
-        wrapper.wrapped.stderr
-            .on('data', (data) => {
+        wrapper.on('message', (content) => {
+            this.log(content);
             this.broadcastMessage({
-                content: data,
-                type: MessageType.Plain
+                content,
+                type: MessageType.Info
             });
-        });
-        wrapper.wrapped
-            .on('exit', (code) => {
-            this.broadcast('serverstop');
-            if (code === 0) {
-                this.broadcastMessage({
-                    content: 'The server has exited.',
-                    type: MessageType.Info
-                });
-            }
-            else {
-                this.broadcastMessage({
-                    content: `The server has crashed. [Code ${code}]`,
-                    type: MessageType.Error
-                });
-            }
         });
     }
     auth(client, password) {
@@ -108,8 +117,10 @@ class Messenger {
         this.failedAuths[ip] = this.failedAuths[ip].filter(failTime => minutesAgo(failTime) < 1);
         if (this.failedAuths[ip].length > 5) {
             this.bans[ip] = Date.now();
+            const banMessage = `Client [${ip}] has been banned for 10 minutes.`;
+            this.log(banMessage);
             this.broadcastMessage({
-                content: `Client [${ip}] has been banned for 10 minutes.`,
+                content: banMessage,
                 type: MessageType.Info
             });
         }
@@ -122,9 +133,7 @@ class Messenger {
         this.io.sockets.in('authorized').emit(event, data);
     }
     log(...args) {
-        if (this.options.verbose) {
-            console.log(args);
-        }
+        console.log(...args);
     }
 }
 exports.Messenger = Messenger;
