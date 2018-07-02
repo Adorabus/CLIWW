@@ -3,7 +3,7 @@
     #app
       auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
       #console
-        ul.output-log(v-chat-scroll='{always: false, smooth: true}')
+        ul.output-log(v-chat-scroll='{always: false, smooth: false}')
           li.beginning Beginning of Log
           li.message(v-for='message in messages', :class='getMessageClass(message)') {{ message.content }}
         input.command-input(
@@ -36,6 +36,7 @@ export default {
       isAuthenticated: false,
       isConnected: false,
       isAlive: false,
+      messageLimit: 0,
       lastPassword: '',
       socket: null,
       messageClass: ['plain', 'error', 'command', 'info', 'stderr']
@@ -114,19 +115,22 @@ export default {
 
       this.socket = io('localhost:8999')
       this.socket.on('message', (data) => {
+        if (this.messageLimit > 0) {
+          if (this.messages.length === this.messageLimit) {
+            this.messages.shift()
+          }
+        }
         this.messages.push(data)
       })
-      this.socket.on('authsuccess', async (data) => {
+      this.socket.on('authsuccess', async () => {
         console.log('Authentication success!')
-        this.messages = data.messages
-        this.isAlive = data.isAlive
-        this.isAuthenticated = true
         localStorage.setItem('password', this.lastPassword)
+        this.isAuthenticated = true
       })
       this.socket.on('authfail', () => {
         console.log('Authentication failed!')
         localStorage.removeItem('password')
-        this.isAuthenticated = null
+        this.isAuthenticated = false
       })
       this.socket.on('authrequest', () => {
         console.log('Reauthenticating...')
@@ -140,8 +144,10 @@ export default {
         console.log('Disconnected!')
         this.isConnected = false
       })
-      this.socket.on('serverstop', () => {
-        this.isAlive = false
+      this.socket.on('serverstate', (state) => {
+        for (const [key, value] of Object.entries(state)) {
+          this[key] = value
+        }
       })
       if (localStorage.getItem('password')) {
         this.sendAuth(localStorage.getItem('password'))
@@ -239,6 +245,8 @@ label {
 }
 .message {
   word-wrap: break-word;
+  padding-left: 2em;
+  text-indent: -2em;
 }
 .message-error {
   color: rgb(255, 95, 55);

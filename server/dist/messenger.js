@@ -24,9 +24,11 @@ class Messenger {
             client.on('auth', (password) => {
                 if (this.auth(client, password)) {
                     client.join('authorized');
-                    client.emit('authsuccess', {
+                    client.emit('authsuccess');
+                    client.emit('serverstate', {
                         messages: this.messages,
-                        isAlive: this.wrapper.isAlive()
+                        isAlive: this.wrapper.isAlive(),
+                        messageLimit: options.limit || 0
                     });
                     this.log(`[${ipAddr}] authenticated.`);
                 }
@@ -75,10 +77,15 @@ class Messenger {
                 content: 'Process started.',
                 type: MessageType.Info
             }, true);
+            this.broadcast('serverstate', {
+                isAlive: true
+            });
         });
         wrapper
             .on('exit', (code) => {
-            this.broadcast('serverstop');
+            this.broadcast('serverstate', {
+                isAlive: false
+            });
             if (code === 0) {
                 const content = 'The server has exited.';
                 this.broadcastMessage({
@@ -129,6 +136,11 @@ class Messenger {
         }
     }
     broadcastMessage(message, log) {
+        if (this.options.limit && this.options.limit > 0) {
+            if (this.messages.length === this.options.limit) {
+                this.messages.shift();
+            }
+        }
         this.messages.push(message);
         this.io.sockets.in('authorized').emit('message', message);
         if (log) {

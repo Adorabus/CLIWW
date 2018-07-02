@@ -10,6 +10,10 @@ const argv = yargs
   .option('password', {
     describe: 'Console access password.'
   })
+  .option('limit', {
+    describe: 'Maximum stored messages. (Default: Unlimited)',
+    type: 'number'
+  })
   .boolean('keepalive')
   .describe('keepalive', 'Restart the process if it exits.')
   .demandCommand(1, 'No command specified.')
