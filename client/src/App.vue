@@ -62,9 +62,11 @@ export default {
     statusChange () {
       const link = document.querySelector("link[rel*='icon']")
       let name = 'favicon'
-      if (this.isConnected) name = 'connected'
-      if (!this.isAlive) name = 'stopped'
-      if (!this.isAuthenticated) name = 'needauth'
+      if (this.isConnected) {
+        name = 'connected'
+        if (!this.isAlive) name = 'stopped'
+        if (!this.isAuthenticated) name = 'needauth'
+      }
       link.href = `${name}.ico`
     }
   },
