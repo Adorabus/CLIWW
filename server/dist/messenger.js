@@ -7,6 +7,7 @@ var MessageType;
     MessageType[MessageType["Error"] = 1] = "Error";
     MessageType[MessageType["Command"] = 2] = "Command";
     MessageType[MessageType["Info"] = 3] = "Info";
+    MessageType[MessageType["StdErr"] = 4] = "StdErr";
 })(MessageType = exports.MessageType || (exports.MessageType = {}));
 class Messenger {
     constructor(io, wrapper, options = {}) {
@@ -67,7 +68,7 @@ class Messenger {
                 .on('data', (data) => {
                 this.broadcastMessage({
                     content: data,
-                    type: MessageType.Plain
+                    type: MessageType.StdErr
                 });
             });
             this.broadcastMessage({

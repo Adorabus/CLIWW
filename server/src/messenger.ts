@@ -7,7 +7,8 @@ export enum MessageType {
   Plain,
   Error,
   Command,
-  Info
+  Info,
+  StdErr
 }
 
 export interface Message {
@@ -88,7 +89,7 @@ export class Messenger {
         .on('data', (data) => {
           this.broadcastMessage({
             content: data as string,
-            type: MessageType.Plain
+            type: MessageType.StdErr
           })
         })
 

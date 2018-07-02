@@ -30,7 +30,7 @@ export default {
       isAlive: false,
       lastPassword: '',
       socket: null,
-      messageClass: ['plain', 'error', 'command', 'info']
+      messageClass: ['plain', 'error', 'command', 'info', 'stderr']
     }
   },
   methods: {
@@ -200,5 +200,8 @@ input[type=text], input[type=password] {
 }
 .message-command {
   color: rgb(164, 255, 44);
+}
+.message-stderr {
+  color: rgb(255, 29, 78);
 }
 </style>
