@@ -118,11 +118,10 @@ export class Messenger {
 
     wrapper
       .on('message', (content: string) => {
-        this.log(content)
         this.broadcastMessage({
           content,
           type: MessageType.Info
-        })
+        }, true)
       })
   }
 
@@ -149,12 +148,10 @@ export class Messenger {
     this.failedAuths[ip] = this.failedAuths[ip].filter(failTime => minutesAgo(failTime) < 1)
     if (this.failedAuths[ip].length > 5) {
       this.bans[ip] = Date.now()
-      const banMessage = `Client [${ip}] has been banned for 10 minutes.`
-      this.log(banMessage)
       this.broadcastMessage({
-        content: banMessage,
+        content: `Client [${ip}] has been banned for 10 minutes.`,
         type: MessageType.Info
-      })
+      }, true)
     }
   }
 
