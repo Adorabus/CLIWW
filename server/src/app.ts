@@ -1,9 +1,12 @@
 import * as http from 'http'
+import * as serveStatic from 'serve-static'
 import * as socketIO from 'socket.io'
+import * as express from 'express'
 import {Wrapper, WrapperOptions} from './wrapper'
 import {Messenger, MessengerOptions} from './messenger'
 import {AddressInfo} from 'net'
 import * as yargs from 'yargs'
+import * as path from 'path'
 
 const argv = yargs
   .usage('Usage: $0 [options] <command>')
@@ -19,7 +22,14 @@ const argv = yargs
   .demandCommand(1, 'No command specified.')
   .argv
 
-const server = http.createServer()
+const app = express()
+app.use(express.static(path.join(__dirname, 'public')))
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
+})
+
+const server = http.createServer(app)
+
 const io = socketIO(server)
 
 const command = argv._.shift() as string

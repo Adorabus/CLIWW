@@ -76,10 +76,9 @@ export default {
     statusChange () {
       const link = document.querySelector("link[rel*='icon']")
       let name = 'favicon'
-      if (this.isConnected) {
+      if (this.isConnected && this.isAuthenticated) {
         name = 'connected'
         if (!this.isAlive) name = 'stopped'
-        if (!this.isAuthenticated) name = 'needauth'
       }
       link.href = `${name}.ico`
     },
@@ -127,7 +126,7 @@ export default {
         this.socket.removeAllListeners()
       }
 
-      this.socket = io('localhost:8999')
+      this.socket = io(`${location.hostname}:${location.port}`)
       this.socket.on('message', (data) => {
         if (this.messageLimit > 0) {
           if (this.messages.length === this.messageLimit) {

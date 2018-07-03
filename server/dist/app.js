@@ -2,9 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const http = require("http");
 const socketIO = require("socket.io");
+const express = require("express");
 const wrapper_1 = require("./wrapper");
 const messenger_1 = require("./messenger");
 const yargs = require("yargs");
+const path = require("path");
 const argv = yargs
     .usage('Usage: $0 [options] <command>')
     .option('password', {
@@ -18,7 +20,12 @@ const argv = yargs
     .describe('keepalive', 'Restart the process if it exits.')
     .demandCommand(1, 'No command specified.')
     .argv;
-const server = http.createServer();
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+const server = http.createServer(app);
 const io = socketIO(server);
 const command = argv._.shift();
 const wrapper = new wrapper_1.Wrapper(command, argv._, argv);
