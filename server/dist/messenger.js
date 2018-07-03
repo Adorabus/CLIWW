@@ -9,6 +9,15 @@ var MessageType;
     MessageType[MessageType["Info"] = 3] = "Info";
     MessageType[MessageType["StdErr"] = 4] = "StdErr";
 })(MessageType = exports.MessageType || (exports.MessageType = {}));
+function validNickname(nickname) {
+    if (!nickname)
+        return false;
+    if (typeof (nickname) !== 'string')
+        return false;
+    if (nickname.length < 1 || nickname.length > 16)
+        return false;
+    return true;
+}
 class Messenger {
     constructor(io, wrapper, options = {}) {
         this.failedAuths = {};
@@ -36,6 +45,11 @@ class Messenger {
                     client.emit('authfail');
                 }
             });
+            client.on('nickname', (nickname) => {
+                if (!validNickname(nickname))
+                    return;
+                client.nickname = nickname;
+            });
             client.on('command', (command) => {
                 if (!('authorized' in client.rooms)) {
                     client.emit('authrequest');
@@ -44,7 +58,7 @@ class Messenger {
                 if (command.trim().length === 0)
                     return;
                 this.broadcastMessage({
-                    content: `[${ipAddr}]> ${command}`,
+                    content: `[${client.nickname || ipAddr}]> ${command}`,
                     type: MessageType.Command
                 });
                 if (!this.wrapper.send(`${command}\n`)) {

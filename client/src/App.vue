@@ -1,18 +1,21 @@
 <template lang="pug">
-  .container
-    #app
-      auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
-      #console
-        ul.output-log(v-chat-scroll='{always: false, smooth: false}')
-          li.beginning Beginning of Log
-          li.message(v-for='message in messages', :class='getMessageClass(message)') {{ message.content }}
-        input.command-input(
-          type='text', v-model='input', autofocus,
-          @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
-        )
-      #settings
-        label(for='word-wrap') Word Wrap
-        input#word-wrap(type='checkbox', v-model='settings.wordWrap')
+  #app
+    auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
+    #users.side-panel
+      h3 Users
+      input.center(type='text', placeholder='Nickname', @keydown.enter.prevent='setNickname', v-model='settings.nickname')
+    #console
+      ul.output-log(v-chat-scroll='{always: false, smooth: false}')
+        li.beginning Beginning of Log
+        li.message(v-for='message in messages', :class='getMessageClass(message)') {{ message.content }}
+      input.command-input(
+        type='text', v-model='input', autofocus,
+        @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
+      )
+    #settings.side-panel
+      h3 Settings
+      label(for='word-wrap') Word Wrap
+      input#word-wrap(type='checkbox', v-model='settings.wordWrap')
 </template>
 
 <script>
@@ -28,7 +31,8 @@ export default {
     return {
       input: '',
       settings: {
-        wordWrap: true
+        wordWrap: true,
+        nickname: ''
       },
       messages: [],
       history: [],
@@ -44,6 +48,7 @@ export default {
   },
   methods: {
     sendAuth (password) {
+      console.log('Sending auth...')
       this.socket.emit('auth', password)
       this.lastPassword = password
     },
@@ -84,6 +89,11 @@ export default {
       }
       obj['message-' + this.messageClass[message.type]] = true
       return obj
+    },
+    setNickname () {
+      if (this.isConnected) {
+        this.socket.emit('nickname', this.settings.nickname)
+      }
     }
   },
   watch: {
@@ -113,6 +123,10 @@ export default {
         this.settings = JSON.parse(loadedSettings)
       }
 
+      if (this.socket) {
+        this.socket.removeAllListeners()
+      }
+
       this.socket = io('localhost:8999')
       this.socket.on('message', (data) => {
         if (this.messageLimit > 0) {
@@ -126,6 +140,7 @@ export default {
         console.log('Authentication success!')
         localStorage.setItem('password', this.lastPassword)
         this.isAuthenticated = true
+        this.setNickname()
       })
       this.socket.on('authfail', () => {
         console.log('Authentication failed!')
@@ -158,32 +173,24 @@ export default {
 </script>
 
 <style lang="scss">
-.container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-content: center;
-  width: 100%;
-}
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  justify-content: space-between;
 }
 #console {
   display: flex;
   flex-direction: column;
 }
-#settings {
-  width: 800px;
-  height: 200px;
+.side-panel {
+  width: 300px;
   border: $border;
-  margin-top: 20px;
   box-sizing: border-box;
+  margin: 1em;
 }
 html, body {
   margin: 0;
@@ -209,7 +216,7 @@ textarea, select, input, button {
 }
 .output-log {
   width: 800px;
-  height: 600px;
+  height: calc(100vh - 100px);
   border: $border;
   text-align: left;
   padding: 10px;
@@ -272,5 +279,8 @@ label {
 .no-wrap {
   word-wrap: none;
   white-space: nowrap;
+}
+.center {
+  text-align: center;
 }
 </style>

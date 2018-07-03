@@ -1,7 +1,13 @@
-import * as SocketIO from 'socket.io'
+import {Socket, Server} from 'socket.io'
 import {Wrapper} from './wrapper'
 import {ChildProcess} from 'child_process'
 import {minutesAgo} from './util'
+
+declare module 'socket.io' {
+  interface Socket {
+    nickname?: string
+  }
+}
 
 export enum MessageType {
   Plain,
@@ -21,20 +27,26 @@ export interface MessengerOptions {
   limit?: number
 }
 
+function validNickname (nickname: string) {
+  if (!nickname) return false
+  if (typeof(nickname) !== 'string') return false
+  if (nickname.length < 1 || nickname.length > 16) return false
+  return true
+}
 
 export class Messenger {
-  private io: SocketIO.Server
+  private io: Server
   private wrapper: Wrapper
   private options: MessengerOptions
   private failedAuths: {[index: string] : number[]} = {}
   private bans: {[index: string] : number} = {}
   messages: Message[] = []
 
-  constructor (io: SocketIO.Server, wrapper: Wrapper, options: MessengerOptions = {}) {
+  constructor (io: Server, wrapper: Wrapper, options: MessengerOptions = {}) {
     this.io = io
     this.wrapper = wrapper
     this.options = options
-    io.on('connection', (client: SocketIO.Socket) => {
+    io.on('connection', (client: Socket) => {
       const ipAddr = client.client.conn.remoteAddress
       this.log(`Connection from [${ipAddr}].`)
       client.emit('authrequest')
@@ -54,6 +66,11 @@ export class Messenger {
         }
       })
 
+      client.on('nickname', (nickname) => {
+        if (!validNickname(nickname)) return
+        client.nickname = nickname
+      })
+
       client.on('command', (command) => {
         if (!('authorized' in client.rooms)) {
           client.emit('authrequest')
@@ -62,7 +79,7 @@ export class Messenger {
         if (command.trim().length === 0) return
 
         this.broadcastMessage({
-          content: `[${ipAddr}]> ${command}`,
+          content: `[${client.nickname || ipAddr}]> ${command}`,
           type: MessageType.Command
         })
 
@@ -135,7 +152,7 @@ export class Messenger {
       })
   }
 
-  auth (client: SocketIO.Socket, password: string) {
+  auth (client: Socket, password: string) {
     if (!this.options.password) return true
     const ip = client.client.conn.remoteAddress
 
