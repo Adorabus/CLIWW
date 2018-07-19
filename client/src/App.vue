@@ -177,24 +177,32 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  grid-template-rows: 1fr;
+  grid-template-areas: 'users console settings';
+}
+#users {
+  grid-area: 'users';
 }
 #console {
   display: flex;
   flex-direction: column;
+  grid-area: 'console';
+}
+#settings {
+  grid-area: 'settings';
 }
 .side-panel {
-  width: 300px;
-  border: $border;
-  box-sizing: border-box;
-  margin: 1em;
+  margin-left: 1em;
+  margin-right: 1em;
 }
 html, body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  height: 100vh;
 }
 body {
   background: rgb(31, 31, 31);
@@ -214,8 +222,9 @@ textarea, select, input, button {
   font-family: $monospace;
 }
 .output-log {
-  width: 800px;
-  height: calc(100vh - 100px);
+  margin: 0;
+  max-width: calc(100vw - 400px);
+  height: calc(100vh - 40px);
   border: $border;
   text-align: left;
   padding: 10px;
@@ -237,9 +246,9 @@ textarea, select, input, button {
   }
 }
 .command-input {
-  width: 800px;
 }
 input[type=text], input[type=password] {
+  width: 100%;
   height: 40px;
   padding: 5px;
   font-size: 12pt;
