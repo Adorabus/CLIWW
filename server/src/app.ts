@@ -17,6 +17,10 @@ const argv = yargs
     describe: 'Maximum stored messages. (Default: Unlimited)',
     type: 'number'
   })
+  .option('port', {
+    describe: 'Port to bind to. (Default: 8999)',
+    type: 'number'
+  })
   .boolean('keepalive')
   .describe('keepalive', 'Restart the process if it exits.')
   .demandCommand(1, 'No command specified.')
@@ -37,7 +41,7 @@ const wrapper = new Wrapper(command, argv._, argv as WrapperOptions)
 const messenger = new Messenger(io, wrapper, argv as MessengerOptions)
 wrapper.startProcess()
 
-server.listen(process.env.PORT || 8999, () => {
+server.listen(argv.port || 8999, () => {
   const addrInfo = server.address() as AddressInfo
   console.log(`Listening on port ${addrInfo.port}.`)
 })
