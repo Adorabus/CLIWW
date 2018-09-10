@@ -1,21 +1,15 @@
 <template lang="pug">
   #app
     auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
-    #users.side-panel
-      h3 Users
-      input.center(type='text', placeholder='Nickname', @keydown.enter.prevent='setNickname', v-model='settings.nickname')
     #console
       ul.output-log(v-chat-scroll='{always: false, smooth: false}')
         li.beginning Beginning of Log
-        li.message(v-for='message in messages', :class='getMessageClass(message)') {{ message.content }}
+        li.message(v-for='message in messages', :class='getMessageClass(message)')
+          pre.wrap {{ message.content }}
       input.command-input(
         type='text', v-model='input', autofocus,
         @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
       )
-    #settings.side-panel
-      h3 Settings
-      label(for='word-wrap') Word Wrap
-      input#word-wrap(type='checkbox', v-model='settings.wordWrap')
 </template>
 
 <script>
@@ -179,25 +173,10 @@ export default {
   text-align: center;
   width: 100%;
   height: 100%;
-  display: grid;
-  grid-template-columns: 200px 1fr 200px;
-  grid-template-rows: 1fr;
-  grid-template-areas: 'users console settings';
-}
-#users {
-  grid-area: 'users';
 }
 #console {
   display: flex;
   flex-direction: column;
-  grid-area: 'console';
-}
-#settings {
-  grid-area: 'settings';
-}
-.side-panel {
-  margin-left: 1em;
-  margin-right: 1em;
 }
 html, body {
   margin: 0;
@@ -223,11 +202,10 @@ textarea, select, input, button {
 }
 .output-log {
   margin: 0;
-  max-width: calc(100vw - 400px);
   height: calc(100vh - 40px);
-  border: $border;
   text-align: left;
-  padding: 10px;
+  padding: 0;
+  padding-left: 6px;
   box-sizing: border-box;
   font-size: 10pt;
   list-style: none;
@@ -258,10 +236,26 @@ input[type=text], input[type=password] {
 label {
   font-size: 10pt;
 }
+pre {
+  margin: 0;
+  padding: 0;
+}
+.wrap {
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
 .message {
-  word-wrap: break-word;
-  padding-left: 2em;
-  text-indent: -2em;
+  background-color: rgb(30, 30, 30);
+  margin: 0;
+}
+.message:nth-child(odd) {
+  background-color: rgb(34, 34, 34);
+}
+.message:hover {
+  background-color: rgb(40, 40, 40);
 }
 .message-error {
   color: rgb(255, 95, 55);
