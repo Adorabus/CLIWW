@@ -120,7 +120,8 @@ export default {
         this.socket.removeAllListeners()
       }
 
-      this.socket = io(`${location.hostname}:${location.port}`)
+      const port = window.webpackHotUpdate ? 8999 : location.port
+      this.socket = io(`${location.hostname}:${port}`)
       this.socket.on('message', (data) => {
         if (this.messageLimit > 0) {
           if (this.messages.length === this.messageLimit) {
