@@ -7,7 +7,7 @@
         li.message(v-for='message in messages', :class='getMessageClass(message)')
           pre.wrap {{ message.content }}
       input.command-input(
-        type='text', v-model='input', autofocus,
+        type='text', v-model='input', autofocus, autocomplete='off', autocorrect='off', autocapitalize='off', spellcheck='false',
         @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
       )
 </template>
