@@ -31,7 +31,7 @@ export default {
       messages: [],
       history: [],
       historyPosition: 0,
-      isAuthenticated: false,
+      isAuthenticated: true,
       isConnected: false,
       isAlive: false,
       messageLimit: 0,
@@ -160,6 +160,8 @@ export default {
       })
       if (localStorage.getItem('password')) {
         this.sendAuth(localStorage.getItem('password'))
+      } else {
+        this.isAuthenticated = false
       }
     })
   }
