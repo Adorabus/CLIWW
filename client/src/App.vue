@@ -47,7 +47,7 @@ export default {
       this.lastPassword = password
     },
     send () {
-      if (this.input.trim().length === 0) return
+      // if (this.input.trim().length === 0) return
       this.socket.emit('command', this.input)
       this.history.push(this.input)
       this.input = ''

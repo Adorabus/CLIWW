@@ -76,7 +76,7 @@ export class Messenger {
           client.emit('authrequest')
           return
         }
-        if (command.trim().length === 0) return
+        // if (command.trim().length === 0) return
 
         this.broadcastMessage({
           content: `[${client.nickname || ipAddr}]> ${command}`,
