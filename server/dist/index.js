@@ -39,4 +39,4 @@ server.listen(argv.port || 8999, () => {
     const addrInfo = server.address();
     console.log(`Listening on port ${addrInfo.port}.`);
 });
-//# sourceMappingURL=app.js.map
+//# sourceMappingURL=index.js.map

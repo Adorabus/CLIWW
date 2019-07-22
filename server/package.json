@@ -2,7 +2,11 @@
   "name": "server",
   "version": "1.0.0",
   "description": "Server for CLIWW.",
-  "main": "app.js",
+  "main": "./dist/index.js",
+  "bin": {
+    "cliww": "./bin/cliww.js"
+  },
+  "preferGlobal": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
