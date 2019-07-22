@@ -6,15 +6,22 @@
         li.beginning Beginning of Log
         li.message(v-for='message in messages', :class='getMessageClass(message)')
           pre.wrap {{ message.content }}
-      input.command-input(
-        type='text', v-model='input', autofocus, autocomplete='off', autocorrect='off', autocapitalize='off', spellcheck='false',
-        @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
-      )
+      #bottom
+        input.command-input(
+          type='text', v-model='input', autofocus, autocomplete='off', autocorrect='off', autocapitalize='off', spellcheck='false',
+          @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
+        )
+        #options-container
+          #options(v-if='showOptions')
+            input#nickname(type='text', placeholder='nickname', v-model='nickname', @keydown.enter.prevent='setNickname')
+            button#logout(@click='logOut') Log Out
+          button#options-button.material-icons(@click='showOptions = !showOptions') settings
 </template>
 
 <script>
 import Auth from '@/components/Auth'
 import * as io from 'socket.io-client'
+import debounce from 'lodash.debounce'
 
 export default {
   name: 'console',
@@ -24,9 +31,9 @@ export default {
   data () {
     return {
       input: '',
+      nickname: '',
       settings: {
-        wordWrap: true,
-        nickname: ''
+        wordWrap: true
       },
       messages: [],
       history: [],
@@ -37,7 +44,8 @@ export default {
       messageLimit: 0,
       lastPassword: '',
       socket: null,
-      messageClass: ['plain', 'error', 'command', 'info', 'stderr']
+      messageClass: ['plain', 'error', 'command', 'info', 'stderr'],
+      showOptions: false
     }
   },
   methods: {
@@ -85,8 +93,12 @@ export default {
     },
     setNickname () {
       if (this.isConnected) {
-        this.socket.emit('nickname', this.settings.nickname)
+        this.socket.emit('nickname', this.nickname)
       }
+    },
+    logOut () {
+      localStorage.clear()
+      location.reload()
     }
   },
   watch: {
@@ -102,6 +114,10 @@ export default {
     isAlive () {
       this.statusChange()
     },
+    nickname: debounce(function () {
+      this.setNickname()
+      localStorage.setItem('nickname', this.nickname)
+    }, 500),
     settings: {
       handler () {
         localStorage.setItem('settings', JSON.stringify(this.settings))
@@ -115,6 +131,8 @@ export default {
       if (loadedSettings) {
         this.settings = JSON.parse(loadedSettings)
       }
+
+      this.nickname = localStorage.getItem('nickname') || ''
 
       if (this.socket) {
         this.socket.removeAllListeners()
@@ -181,6 +199,50 @@ export default {
   display: flex;
   flex-direction: column;
 }
+#bottom {
+  display: flex;
+  flex-direction: row;
+}
+#options-button {
+  width: 40px;
+  height: 40px;
+  border: $border;
+  border-left: none;
+  background: rgb(28, 28, 28);
+  color: rgb(190, 190, 190);
+}
+#options-container {
+  position: relative;
+}
+#options {
+  z-index: 1;
+  position: absolute;
+  bottom: 40px;
+  right: 0;
+  width: 180px;
+  background: rgb(28, 28, 28);
+  border: $border;
+  border-bottom: none;
+
+  & > * {
+    border: none;
+    border-bottom: $border;
+
+    &:last-child {
+      border: none;
+    }
+  }
+}
+#nickname {
+  width: 100%;
+  text-align: center;
+}
+#logout {
+  width: 100%;
+  background: rgb(28, 28, 28);
+  color: rgb(190, 190, 190);
+  height: 30px;
+}
 html, body {
   margin: 0;
   padding: 0;
@@ -227,9 +289,10 @@ textarea, select, input, button {
   }
 }
 .command-input {
+  display: inline-block;
+  width: 100%;
 }
 input[type=text], input[type=password] {
-  width: 100%;
   height: 40px;
   padding: 5px;
   font-size: 12pt;

@@ -46,8 +46,10 @@ class Messenger {
                 }
             });
             client.on('nickname', (nickname) => {
-                if (!validNickname(nickname))
+                if (!validNickname(nickname)) {
+                    delete client.nickname;
                     return;
+                }
                 client.nickname = nickname;
             });
             client.on('command', (command) => {

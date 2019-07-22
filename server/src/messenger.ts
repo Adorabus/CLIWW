@@ -67,7 +67,10 @@ export class Messenger {
       })
 
       client.on('nickname', (nickname) => {
-        if (!validNickname(nickname)) return
+        if (!validNickname(nickname)) {
+          delete client.nickname
+          return
+        }
         client.nickname = nickname
       })
 
