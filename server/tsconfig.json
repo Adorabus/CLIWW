@@ -4,12 +4,13 @@
     "module": "commonjs",
     "outDir": "./dist",
     "strict": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "typeRoots": [
       "node_modules/@types"
     ],
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "listEmittedFiles": true
   },
   "compileOnSave": true,
   "exclude": [

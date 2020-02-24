@@ -1,7 +1,7 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "description": "Server for CLIWW.",
+  "name": "cliww",
+  "version": "1.1.0",
+  "description": "Provides a remote web interface to a wrapped child process.",
   "main": "./dist/index.js",
   "bin": {
     "cliww": "./bin/cliww.js"

@@ -180,4 +180,3 @@ class Messenger {
     }
 }
 exports.Messenger = Messenger;
-//# sourceMappingURL=messenger.js.map

@@ -60,4 +60,3 @@ class Wrapper extends events_1.EventEmitter {
     }
 }
 exports.Wrapper = Wrapper;
-//# sourceMappingURL=wrapper.js.map

@@ -8,4 +8,3 @@ function minutesAgo(timestamp) {
     return (Date.now() - timestamp) / 1000 / 60;
 }
 exports.minutesAgo = minutesAgo;
-//# sourceMappingURL=util.js.map

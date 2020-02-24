@@ -1,0 +1,21 @@
+{
+  "name": "cliww",
+  "version": "1.1.0",
+  "description": "Provides a remote web interface to a wrapped child process.",
+  "scripts": {
+    "package": "node package.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adorabus/CLIWW.git"
+  },
+  "author": "Adorabus",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Adorabus/CLIWW/issues"
+  },
+  "homepage": "https://github.com/Adorabus/CLIWW#readme",
+  "dependencies": {
+    "adm-zip": "^0.4.14"
+  }
+}

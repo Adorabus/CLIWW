@@ -1,2 +1,2 @@
 # CLIWW
-Wraps a CLI and provides a web interface.
+Provides a remote web interface to a wrapped child process.
