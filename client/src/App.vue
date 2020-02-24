@@ -8,7 +8,7 @@
           pre.wrap {{ message.content }}
       #bottom
         input.command-input(
-          type='text', v-model='input', autofocus, autocomplete='off', autocorrect='off', autocapitalize='off', spellcheck='false',
+          type='text', v-bind:value='input', v-on:input='input = $event.target.value', autofocus, autocomplete='off', autocorrect='off', autocapitalize='off', spellcheck='false',
           @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
         )
         #options-container
