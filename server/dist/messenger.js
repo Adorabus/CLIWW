@@ -62,6 +62,15 @@ class Messenger {
                     content: `[${client.nickname || ipAddr}]> ${command}`,
                     type: MessageType.Command
                 });
+                // manual restart command if crashed
+                if (command === 'rs' && !this.wrapper.isAlive()) {
+                    this.broadcastMessage({
+                        content: 'Server manually restarted...',
+                        type: MessageType.Info
+                    });
+                    this.wrapper.startProcess();
+                    return;
+                }
                 if (!this.wrapper.send(`${command}\n`)) {
                     this.broadcastMessage({
                         content: 'Server is not running!',
@@ -74,6 +83,9 @@ class Messenger {
             });
         });
         wrapper.on('start', (wrapped) => {
+            if (!wrapped.stdout || !wrapped.stderr) {
+                throw new Error('Failed to wrap child process...');
+            }
             wrapped.stdout
                 .on('data', (data) => {
                 this.broadcastMessage({
@@ -102,16 +114,14 @@ class Messenger {
                 isAlive: false
             });
             if (code === 0) {
-                const content = 'The server has exited.';
                 this.broadcastMessage({
-                    content,
+                    content: 'The server has exited.\nType rs to restart it.',
                     type: MessageType.Info
                 }, true);
             }
             else {
-                const content = `The server has crashed. [Code ${code}]`;
                 this.broadcastMessage({
-                    content,
+                    content: `The server has crashed. [Code ${code}]\nType rs to restart it.`,
                     type: MessageType.Error
                 }, true);
             }

@@ -47,7 +47,7 @@ class Wrapper extends events_1.EventEmitter {
     send(command) {
         if (!this.wrapped)
             return false;
-        if (this.wrapped.stdin.writable) {
+        if (this.wrapped.stdin && this.wrapped.stdin.writable) {
             this.wrapped.stdin.write(command);
             return true;
         }

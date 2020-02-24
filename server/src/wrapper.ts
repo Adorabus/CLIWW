@@ -61,7 +61,7 @@ export class Wrapper extends EventEmitter {
 
   send (command: string): boolean {
     if (!this.wrapped) return false
-    if (this.wrapped.stdin.writable) {
+    if (this.wrapped.stdin && this.wrapped.stdin.writable) {
       this.wrapped.stdin.write(command)
       return true
     } else {
