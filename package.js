@@ -28,6 +28,7 @@ output.addLocalFolder(path.join(svdir, 'bin'), 'cliww/bin')
 output.addLocalFolder(path.join(cldir, 'dist'), 'cliww/dist/public')
 output.addLocalFile(path.join(svdir, 'package.json'), 'cliww/')
 output.addLocalFile(path.join(svdir, 'package-lock.json'), 'cliww/')
+output.addLocalFile(path.join(__dirname, 'README.md'), 'cliww/')
 output.writeZip(outputName)
 
 console.log()
