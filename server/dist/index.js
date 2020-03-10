@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const http = require("http");
+require('dotenv').config();
 const socketIO = require("socket.io");
 const express = require("express");
 const wrapper_1 = require("./wrapper");
 const messenger_1 = require("./messenger");
 const yargs = require("yargs");
 const path = require("path");
+const fs = require("fs");
 const argv = yargs
     .usage('Usage: $0 [options] <command>')
     .option('password', {
@@ -25,11 +26,29 @@ const argv = yargs
     .demandCommand(1, 'No command specified.')
     .argv;
 const app = express();
+let server;
+const { key, cert } = process.env;
+if (key && cert) {
+    try {
+        server = require('https').createServer({
+            key: fs.readFileSync(key),
+            cert: fs.readFileSync(cert)
+        }, app);
+        console.log('Starting using https...');
+    }
+    catch (error) {
+        console.error(error);
+        process.exit(1);
+    }
+}
+else {
+    console.log('Starting using http...');
+    server = require('http').createServer(app);
+}
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-const server = http.createServer(app);
 const io = socketIO(server);
 const command = argv._.shift();
 const wrapper = new wrapper_1.Wrapper(command, argv._, argv);

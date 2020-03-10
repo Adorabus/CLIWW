@@ -1,5 +1,4 @@
-import * as http from 'http'
-import * as serveStatic from 'serve-static'
+require('dotenv').config()
 import * as socketIO from 'socket.io'
 import * as express from 'express'
 import {Wrapper, WrapperOptions} from './wrapper'
@@ -7,6 +6,7 @@ import {Messenger, MessengerOptions} from './messenger'
 import {AddressInfo} from 'net'
 import * as yargs from 'yargs'
 import * as path from 'path'
+import * as fs from 'fs'
 
 const argv = yargs
   .usage('Usage: $0 [options] <command>')
@@ -27,12 +27,29 @@ const argv = yargs
   .argv
 
 const app = express()
+let server: any
+
+const {key, cert} = process.env
+if (key && cert) {
+  try {
+    server = require('https').createServer({
+      key: fs.readFileSync(key),
+      cert: fs.readFileSync(cert)
+    }, app)
+    console.log('Starting using https...')
+  } catch (error) {
+    console.error(error)
+    process.exit(1)
+  }
+} else {
+  console.log('Starting using http...')
+  server = require('http').createServer(app)
+}
+
 app.use(express.static(path.join(__dirname, 'public')))
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
-
-const server = http.createServer(app)
 
 const io = socketIO(server)
 
