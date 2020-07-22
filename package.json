@@ -16,6 +16,7 @@
   },
   "homepage": "https://github.com/Adorabus/CLIWW#readme",
   "dependencies": {
-    "adm-zip": "^0.4.14"
+    "adm-zip": "^0.4.14",
+    "command-exists": "^1.2.9"
   }
 }

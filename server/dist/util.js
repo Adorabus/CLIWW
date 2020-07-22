@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.minutesAgo = exports.secondsAgo = void 0;
 function secondsAgo(timestamp) {
     return (Date.now() - timestamp) / 1000;
 }

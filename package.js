@@ -3,10 +3,18 @@ console.log('Compiling and packaging for release...')
 const path = require('path')
 const {execSync} = require('child_process')
 const Zip = require('adm-zip')
+const commandExistsSync  = require('command-exists').sync
 const {version} = require('./package.json')
 
 const cldir = path.join(__dirname, 'client')
 const svdir = path.join(__dirname, 'server')
+
+if (commandExistsSync('tsc')) {
+  console.log('TypeScript found.')
+} else {
+  console.log('TypeScript is required. Please install it and try again.')
+  process.exit(0)
+}
 
 console.log('Building client...')
 process.chdir(cldir)
