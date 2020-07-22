@@ -4,8 +4,10 @@
     #console
       ul.output-log(v-chat-scroll='{always: false, smooth: false}')
         li.beginning Beginning of Log
-        li.message(v-for='message in messages', :class='getMessageClass(message)')
-          pre.wrap {{ message.content }}
+        li.message(v-for='message in messages')
+          pre(v-if='settings.colors && message.spans', :class='{wrap: settings.wordWrap}')
+            span(v-for='span in message.spans', :style='span.style') {{ span.text }}
+          pre(v-else, :class='{wrap: settings.wordWrap}') {{ message.content }}
       #bottom
         input.command-input(
           type='text', v-bind:value='input', v-on:input='input = $event.target.value', autofocus, autocomplete='off', autocorrect='off', autocapitalize='off', spellcheck='false',
@@ -14,6 +16,12 @@
         #options-container
           #options(v-if='showOptions')
             input#nickname(type='text', placeholder='nickname', v-model='nickname', @keydown.enter.prevent='setNickname')
+            .option
+              label.check(for='chk-colors') ANSI Colors
+                input#chk-colors(type='checkbox', v-model='settings.colors')
+            .option
+              label.check(for='chk-wrap') Wrap Lines
+                input#chk-wrap(type='checkbox', v-model='settings.wordWrap')
             button#logout(@click='logOut') Log Out
           button#options-button.material-icons(@click='showOptions = !showOptions') settings
 </template>
@@ -22,6 +30,28 @@
 import Auth from '@/components/Auth'
 import * as io from 'socket.io-client'
 import debounce from 'lodash.debounce'
+
+const { parse, strip } = require('ansicolor')
+
+// takes in a message, puts ansi color spans in, if there are any
+function ansiColorize (message) {
+  const parsed = parse(message.content)
+  const spans = []
+
+  for (const span of parsed.spans) {
+    spans.push({
+      style: span.css,
+      text: strip(span.text)
+    })
+  }
+
+  if (spans.length > 0) {
+    message.spans = spans
+  }
+
+  // remove ansi codes from original, in case client opts out
+  message.content = strip(message.content)
+}
 
 export default {
   name: 'console',
@@ -33,7 +63,8 @@ export default {
       input: '',
       nickname: '',
       settings: {
-        wordWrap: true
+        wordWrap: true,
+        colors: true
       },
       messages: [],
       history: [],
@@ -84,13 +115,6 @@ export default {
       }
       link.href = `${name}.ico`
     },
-    getMessageClass (message) {
-      const obj = {
-        'no-wrap': !this.settings.wordWrap
-      }
-      obj['message-' + this.messageClass[message.type]] = true
-      return obj
-    },
     setNickname () {
       if (this.isConnected) {
         this.socket.emit('nickname', this.nickname)
@@ -140,13 +164,16 @@ export default {
 
       const port = window.webpackHotUpdate ? 8999 : location.port
       this.socket = io(`${location.hostname}:${port}`)
-      this.socket.on('message', (data) => {
+      this.socket.on('message', (message) => {
         if (this.messageLimit > 0) {
           if (this.messages.length === this.messageLimit) {
             this.messages.shift()
           }
         }
-        this.messages.push(data)
+
+        ansiColorize(message)
+
+        this.messages.push(message)
       })
       this.socket.on('authsuccess', async () => {
         console.log('Authentication success!')
@@ -174,6 +201,10 @@ export default {
       this.socket.on('serverstate', (state) => {
         for (const [key, value] of Object.entries(state)) {
           this[key] = value
+        }
+
+        for (const message of this.messages) {
+          ansiColorize(message)
         }
       })
       if (localStorage.getItem('password')) {
@@ -223,19 +254,20 @@ export default {
   background: rgb(28, 28, 28);
   border: $border;
   border-bottom: none;
-
-  & > * {
-    border: none;
-    border-bottom: $border;
-
-    &:last-child {
-      border: none;
-    }
-  }
 }
+
+.option {
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
 #nickname {
   width: 100%;
+  height: 30px;
   text-align: center;
+  border: none;
+  margin: 0;
+  box-shadow: inset 0 0 5px #00000066;
 }
 #logout {
   width: 100%;
@@ -261,6 +293,9 @@ textarea, select, input, button {
   &:focus {
     outline: none;
   }
+}
+button {
+  border: 1px solid #333;
 }
 .output-log, .command-input {
   font-family: $monospace;
@@ -343,10 +378,6 @@ pre {
   font-size: 10pt;
   padding: 4px;
   line-height: 13px;
-}
-.no-wrap {
-  word-wrap: none;
-  white-space: nowrap;
 }
 .center {
   text-align: center;
