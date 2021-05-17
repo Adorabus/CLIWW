@@ -5,7 +5,7 @@
       ul.output-log(v-chat-scroll='{always: false, smooth: false}')
         li.beginning Beginning of Log
         li.message(v-for='message in messages')
-          pre(v-if='settings.colors && message.spans', :class='{wrap: settings.wordWrap}')
+          pre(v-if='settings.colors && message.spans', :class='getMessageClass(message)')
             span(v-for='span in message.spans', :style='span.style') {{ span.text }}
           pre(v-else, :class='{wrap: settings.wordWrap}') {{ message.content }}
       #bottom
@@ -31,10 +31,33 @@ import Auth from '@/components/Auth'
 import * as io from 'socket.io-client'
 import debounce from 'lodash.debounce'
 
-const { parse, strip } = require('ansicolor')
+const ansi = require('ansicolor')
+const { parse, strip } = ansi
+
+ansi.rgb = {
+  black: [0, 0, 0],
+  darkGray: [100, 100, 100],
+  lightGray: [200, 200, 200],
+  white: [255, 255, 255],
+  red: [255, 48, 48],
+  lightRed: [255, 94, 94],
+  green: [124, 255, 77],
+  lightGreen: [193, 255, 171],
+  yellow: [255, 255, 33],
+  lightYellow: [255, 255, 112],
+  blue: [28, 145, 255],
+  lightBlue: [138, 198, 255],
+  magenta: [255, 56, 202],
+  lightMagenta: [255, 150, 227],
+  cyan: [31, 255, 255],
+  lightCyan: [153, 255, 255]
+}
 
 // takes in a message, puts ansi color spans in, if there are any
 function ansiColorize (message) {
+  if (message.colorized) return
+  message.colorized = true
+
   const parsed = parse(message.content)
   const spans = []
 
@@ -80,6 +103,13 @@ export default {
     }
   },
   methods: {
+    getMessageClass (message) {
+      const obj = {
+        wrap: this.settings.wordWrap
+      }
+      obj['message-' + this.messageClass[message.type]] = true
+      return obj
+    },
     sendAuth (password) {
       console.log('Sending auth...')
       this.socket.emit('auth', password)
@@ -108,6 +138,11 @@ export default {
     },
     statusChange () {
       const link = document.querySelector("link[rel*='icon']")
+      if (!this.isConnected) {
+        link.href = 'data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAABMLAAATCwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH9/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/f39//xEREf8RERH/f39//39/f/8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf9/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf9/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAMADAACAAQAAgAEAAIABAACAAQAAgAEAAIABAACAAQAAgAEAAIABAACAAQAAgAEAAIABAADAAwAA//8AAA=='
+        return
+      }
+
       let name = 'favicon'
       if (this.isConnected && this.isAuthenticated) {
         name = 'connected'
