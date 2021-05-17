@@ -7,13 +7,13 @@ Provides a remote web interface to a wrapped child process.
 
 ### Options
 
-`--password [PASSWORD]`
+`--password PASSWORD`
 Require a password to access the console. (Recommended)
 
-`--limit [MAXIMUM]`
+`--limit MAXIMUM`
 Maximum number of messages to keep in the console. There is no limit by default. Setting a limit is recommended.
 
-`--port [PORT]`
+`--port PORT`
 Port to listen on. (Default: 8999)
 
 `--keepalive`
