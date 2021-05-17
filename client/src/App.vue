@@ -39,18 +39,18 @@ ansi.rgb = {
   darkGray: [100, 100, 100],
   lightGray: [200, 200, 200],
   white: [255, 255, 255],
-  red: [255, 48, 48],
-  lightRed: [255, 94, 94],
-  green: [124, 255, 77],
-  lightGreen: [193, 255, 171],
-  yellow: [255, 255, 33],
-  lightYellow: [255, 255, 112],
-  blue: [28, 145, 255],
-  lightBlue: [138, 198, 255],
-  magenta: [255, 56, 202],
-  lightMagenta: [255, 150, 227],
-  cyan: [31, 255, 255],
-  lightCyan: [153, 255, 255]
+  red: [222, 69, 107],
+  lightRed: [222, 115, 142],
+  green: [55, 174, 111],
+  lightGreen: [113, 212, 160],
+  yellow: [201, 160, 34],
+  lightYellow: [205, 173, 76],
+  blue: [44, 152, 184],
+  lightBlue: [101, 170, 190],
+  magenta: [149, 93, 206],
+  lightMagenta: [169, 131, 208],
+  cyan: [36, 181, 168],
+  lightCyan: [99, 186, 178]
 }
 
 // takes in a message, puts ansi color spans in, if there are any
@@ -274,7 +274,7 @@ export default {
   height: 40px;
   border: $border;
   border-left: none;
-  background: rgb(28, 28, 28);
+  background: #1b1d22;
   color: rgb(190, 190, 190);
 }
 #options-container {
@@ -316,7 +316,7 @@ html, body {
   height: 100vh;
 }
 body {
-  background: rgb(31, 31, 31);
+  background: #1b1d22;
   color: $text-color;
 }
 input {
@@ -340,7 +340,6 @@ button {
   height: calc(100vh - 40px);
   text-align: left;
   padding: 0;
-  padding-left: 6px;
   box-sizing: border-box;
   font-size: 10pt;
   list-style: none;
@@ -384,14 +383,15 @@ pre {
   word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
 .message {
-  background-color: rgb(30, 30, 30);
+  // background-color: #20232a;
   margin: 0;
+  padding-left: 4px;
 }
 .message:nth-child(odd) {
-  background-color: rgb(34, 34, 34);
+  background-color: #202329;
 }
 .message:hover {
-  background-color: rgb(40, 40, 40);
+  background-color: #23262f;
 }
 .message-error {
   color: rgb(255, 95, 55);
@@ -406,7 +406,7 @@ pre {
   color: rgb(255, 29, 78);
 }
 .beginning {
-  background: rgb(255, 81, 0);
+  background: #f35b38;
   text-align: center;
   color: white;
   font-family: 'Open Sans', sans-serif;
