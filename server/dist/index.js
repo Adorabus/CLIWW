@@ -5,26 +5,10 @@ const socketIO = require("socket.io");
 const express = require("express");
 const wrapper_1 = require("./wrapper");
 const messenger_1 = require("./messenger");
-const yargs = require("yargs");
+const minimist = require("minimist");
 const path = require("path");
 const fs = require("fs");
-const argv = yargs
-    .usage('Usage: $0 [options] <command>')
-    .option('password', {
-    describe: 'Console access password.'
-})
-    .option('limit', {
-    describe: 'Maximum stored messages. (Default: Unlimited)',
-    type: 'number'
-})
-    .option('port', {
-    describe: 'Port to bind to. (Default: 8999)',
-    type: 'number'
-})
-    .boolean('keepalive')
-    .describe('keepalive', 'Restart the process if it exits.')
-    .demandCommand(1, 'No command specified.')
-    .argv;
+const argv = minimist(process.argv.slice(2), { 'stopEarly': true });
 const app = express();
 let server;
 const { key, cert } = process.env;

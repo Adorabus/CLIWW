@@ -4,28 +4,11 @@ import * as express from 'express'
 import {Wrapper, WrapperOptions} from './wrapper'
 import {Messenger, MessengerOptions} from './messenger'
 import {AddressInfo} from 'net'
-import * as yargs from 'yargs'
+import * as minimist from 'minimist'
 import * as path from 'path'
 import * as fs from 'fs'
 
-const argv = yargs
-  .usage('Usage: $0 [options] <command>')
-  .option('password', {
-    describe: 'Console access password.'
-  })
-  .option('limit', {
-    describe: 'Maximum stored messages. (Default: Unlimited)',
-    type: 'number'
-  })
-  .option('port', {
-    describe: 'Port to bind to. (Default: 8999)',
-    type: 'number'
-  })
-  .boolean('keepalive')
-  .describe('keepalive', 'Restart the process if it exits.')
-  .demandCommand(1, 'No command specified.')
-  .argv
-
+const argv = minimist(process.argv.slice(2), {'stopEarly': true})
 const app = express()
 let server: any
 
