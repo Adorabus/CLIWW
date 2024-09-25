@@ -56,12 +56,14 @@ const settings = reactive({
   colors: true
 })
 const messages = ref([])
+const state = reactive({
+  isAlive: false,
+  messageLimit: 0,
+})
 const history = ref([])
 const historyPosition = ref(0)
 const isAuthenticated = ref(true)
 const isConnected = ref(false)
-const isAlive = ref(false)
-const messageLimit = ref(0)
 const lastPassword = ref('')
 const messageClass = ['plain', 'error', 'command', 'info', 'stderr']
 const showOptions = ref(false)
@@ -111,7 +113,7 @@ const statusChange = () => {
   let name = 'favicon'
   if (isConnected.value && isAuthenticated.value) {
     name = 'connected'
-    if (!isAlive.value) name = 'stopped'
+    if (!state.isAlive) name = 'stopped'
   }
   link.href = `${name}.ico`
 }
@@ -131,7 +133,7 @@ watch(history, () => {
   historyPosition.value = history.value.length
 })
 
-watch([isConnected, isAuthenticated, isAlive], statusChange)
+watch([isConnected, isAuthenticated, state], statusChange)
 
 watch(nickname, debounce(() => {
   setNickname()
@@ -158,7 +160,7 @@ onMounted(() => {
   socket = io(`${location.hostname}:${port}`)
 
   socket.on('message', (message) => {
-    if (messageLimit.value > 0 && messages.value.length === messageLimit.value) {
+    if (state.messageLimit > 0 && messages.value.length === state.messageLimit) {
       messages.value.shift()
     }
 
@@ -194,21 +196,17 @@ onMounted(() => {
     isConnected.value = false
   })
 
-  socket.on('serverstate', (state) => {
-    if (state.isAlive !== undefined) {
-      isAlive.value = state.isAlive
+  socket.on('serverstate', (data) => {
+    for (const key in data) {
+      state[key] = data[key]
     }
+  })
 
-    if (state.messageLimit !== undefined) {
-      messageLimit.value = state.messageLimit
-    }
-
-    if (state.messages !== undefined) {
-      messages.value = state.messages.map((message) => {
-        ansiColorize(message)
-        return message
-      })
-    }
+  socket.on('messagehistory', (data) => {
+    messages.value = data.messages.map((message) => {
+      ansiColorize(message)
+      return message
+    })
   })
 
   if (localStorage.getItem('password')) {

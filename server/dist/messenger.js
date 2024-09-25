@@ -32,9 +32,11 @@ class Messenger {
                     client.join('authorized');
                     client.emit('authsuccess');
                     client.emit('serverstate', {
-                        messages: this.messages,
                         isAlive: this.wrapper.isAlive(),
-                        messageLimit: options.limit || 0
+                        messageLimit: options.limit || 0,
+                    });
+                    client.emit('messagehistory', {
+                        messages: this.messages
                     });
                     this.log(`[${ipAddr}] authenticated.`);
                 }
