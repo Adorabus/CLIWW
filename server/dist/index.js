@@ -8,6 +8,7 @@ const messenger_1 = require("./messenger");
 const minimist = require("minimist");
 const path = require("path");
 const fs = require("fs");
+const server_options_1 = require("./server-options");
 if (!process.env.CORS_ORIGIN) {
     console.error('CORS_ORIGIN is not set');
     process.exit(1);
@@ -52,7 +53,9 @@ if (!command) {
   --keepalive`);
     process.exit(1);
 }
-const wrapper = new wrapper_1.Wrapper(command, argv._, argv);
+// set defaults
+(0, server_options_1.setOptions)(argv);
+const wrapper = new wrapper_1.Wrapper(command, argv._);
 const messenger = new messenger_1.Messenger(io, wrapper, argv);
 wrapper.startProcess();
 server.listen(argv.port || 8999, () => {

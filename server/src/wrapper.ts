@@ -1,24 +1,19 @@
 import * as child from 'child_process'
 import {EventEmitter} from 'events'
 import {secondsAgo} from './util'
-
-export interface WrapperOptions {
-  keepalive?: boolean
-}
+import { getOptions } from './server-options'
 
 export class Wrapper extends EventEmitter {
   wrapped?: child.ChildProcess
   startedAt?: Date
   command: string
   args: string[]
-  options: WrapperOptions
   private _isAlive: boolean = false
 
-  constructor (command: string, args: string[] = [], options: WrapperOptions = {}) {
+  constructor (command: string, args: string[] = []) {
     super()
     this.command = command
     this.args = args
-    this.options = options
   }
 
   startProcess () {
@@ -42,7 +37,8 @@ export class Wrapper extends EventEmitter {
       this._isAlive = false
       this.emit('exit', code, signal)
 
-      if (this.options.keepalive && this.startedAt) {
+      console.log(getOptions().keepalive, 'keepalive')
+      if (getOptions().keepalive && this.startedAt) {
         if (secondsAgo(this.startedAt.valueOf()) > 5) {
           this.emit('message', 'Restarting wrapped process...')
           this.startProcess()

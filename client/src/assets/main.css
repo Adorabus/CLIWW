@@ -23,6 +23,13 @@ textarea, select, input, button {
 }
 button {
   border: 1px solid #333;
+  cursor: pointer;
+  transition: background 0.25s ease;
+  background: rgb(28, 28, 28);
+  color: white;
+}
+button:hover {
+  background: rgb(32, 32, 32);
 }
 
 label {

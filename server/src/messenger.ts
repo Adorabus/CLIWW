@@ -2,6 +2,7 @@ import {Socket, Server} from 'socket.io'
 import {Wrapper} from './wrapper'
 import {ChildProcess} from 'child_process'
 import {minutesAgo} from './util'
+import { getOptions, setOptions } from './server-options'
 
 declare module 'socket.io' {
   interface Socket {
@@ -22,6 +23,10 @@ export interface Message {
   type: MessageType
 }
 
+export interface SentMessage extends Message {
+  id: number
+}
+
 export interface MessengerOptions {
   password?: string
   limit?: number
@@ -33,12 +38,13 @@ function validNickname (nickname: string) {
 }
 
 export class Messenger {
+  private nextId = 0
   private io: Server
   private wrapper: Wrapper
   private options: MessengerOptions
   private failedAuths: {[index: string] : number[]} = {}
   private bans: {[index: string] : number} = {}
-  messages: Message[] = []
+  messages: SentMessage[] = []
 
   constructor (io: Server, wrapper: Wrapper, options: MessengerOptions = {}) {
     this.io = io
@@ -47,7 +53,6 @@ export class Messenger {
     io.on('connection', (client: Socket) => {
       const ipAddr = client.client.conn.remoteAddress
       this.log(`Connection from [${ipAddr}].`)
-      // client.emit('authrequest')
 
       client.on('auth', (password) => {
         if (this.auth(client, password)) {
@@ -57,6 +62,7 @@ export class Messenger {
             isAlive: this.wrapper.isAlive(),
             messageLimit: options.limit || 0,
           })
+          client.emit('serveroptions', getOptions())
           client.emit('messagehistory', {
             messages: this.messages
           })
@@ -72,6 +78,11 @@ export class Messenger {
           return
         }
         client.nickname = nickname
+      })
+
+      client.on('setoptions', (data) => {
+        setOptions(data)
+        this.broadcast('serveroptions', getOptions())
       })
 
       client.on('command', (command) => {
@@ -199,13 +210,16 @@ export class Messenger {
   }
 
   broadcastMessage (message: Message, log?: boolean) {
+    const id = this.nextId++
+    const sentMessage = {...message, id}
+
     if (this.options.limit && this.options.limit > 0) {
       if (this.messages.length === this.options.limit) {
         this.messages.shift()
       }
     }
-    this.messages.push(message)
-    this.io.sockets.in('authorized').emit('message', message)
+    this.messages.push(sentMessage)
+    this.io.sockets.in('authorized').emit('message', sentMessage)
     if (log) {
       this.log(message.content)
     }

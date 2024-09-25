@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Messenger = exports.MessageType = void 0;
 const util_1 = require("./util");
+const server_options_1 = require("./server-options");
 var MessageType;
 (function (MessageType) {
     MessageType[MessageType["Plain"] = 0] = "Plain";
@@ -17,6 +18,7 @@ function validNickname(nickname) {
 }
 class Messenger {
     constructor(io, wrapper, options = {}) {
+        this.nextId = 0;
         this.failedAuths = {};
         this.bans = {};
         this.messages = [];
@@ -26,7 +28,6 @@ class Messenger {
         io.on('connection', (client) => {
             const ipAddr = client.client.conn.remoteAddress;
             this.log(`Connection from [${ipAddr}].`);
-            // client.emit('authrequest')
             client.on('auth', (password) => {
                 if (this.auth(client, password)) {
                     client.join('authorized');
@@ -35,6 +36,7 @@ class Messenger {
                         isAlive: this.wrapper.isAlive(),
                         messageLimit: options.limit || 0,
                     });
+                    client.emit('serveroptions', (0, server_options_1.getOptions)());
                     client.emit('messagehistory', {
                         messages: this.messages
                     });
@@ -50,6 +52,10 @@ class Messenger {
                     return;
                 }
                 client.nickname = nickname;
+            });
+            client.on('setoptions', (data) => {
+                (0, server_options_1.setOptions)(data);
+                this.broadcast('serveroptions', (0, server_options_1.getOptions)());
             });
             client.on('command', (command) => {
                 if (!client.rooms.has('authorized')) {
@@ -159,13 +165,15 @@ class Messenger {
         }
     }
     broadcastMessage(message, log) {
+        const id = this.nextId++;
+        const sentMessage = Object.assign(Object.assign({}, message), { id });
         if (this.options.limit && this.options.limit > 0) {
             if (this.messages.length === this.options.limit) {
                 this.messages.shift();
             }
         }
-        this.messages.push(message);
-        this.io.sockets.in('authorized').emit('message', message);
+        this.messages.push(sentMessage);
+        this.io.sockets.in('authorized').emit('message', sentMessage);
         if (log) {
             this.log(message.content);
         }

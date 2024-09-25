@@ -55,6 +55,9 @@ const settings = reactive({
   wordWrap: true,
   colors: true
 })
+const serverOptions = ref({
+  keepalive: false,
+})
 const messages = ref([])
 const state = reactive({
   isAlive: false,
@@ -202,6 +205,12 @@ onMounted(() => {
     }
   })
 
+  socket.on('serveroptions', (data) => {
+    for (const key in data) {
+      serverOptions.value[key] = data[key]
+    }
+  })
+
   socket.on('messagehistory', (data) => {
     messages.value = data.messages.map((message) => {
       ansiColorize(message)
@@ -224,9 +233,9 @@ onMounted(() => {
   <div id="console">
     <ul class="output-log" v-autoscroll>
       <li class="beginning">Beginning of Log</li>
-      <li class="message" v-for="message in messages">
+      <li class="message" v-for="message in messages" :key="message.id">
         <pre v-if="settings.colors && message.spans" :class="getMessageClass(message)">
-          <span v-for="span in message.spans" :style="span.style">{{ span.text }}</span>
+          <span v-for="(span, idx) in message.spans" :style="span.style" :key="idx">{{ span.text }}</span>
         </pre>
         <pre v-else :class="{ wrap: settings.wordWrap }">{{ message.content }}</pre>
       </li>
@@ -238,7 +247,7 @@ onMounted(() => {
 
       <div id="options-container">
         <div id="options" v-if="showOptions">
-          <input type="text" placeholder="nickname" v-model="nickname" @keydown.enter.prevent="setNickname">
+          <input id="nickname" type="text" placeholder="nickname" v-model="nickname" @keydown.enter.prevent="setNickname">
 
           <div class="option">
             <label for="chk-colors" class="check">ANSI Colors</label>
@@ -248,6 +257,12 @@ onMounted(() => {
           <div class="option">
             <label for="chk-wrap" class="check">Wrap Lines</label>
             <input type="checkbox" id="chk-wrap" v-model="settings.wordWrap">
+          </div>
+
+          <div class="option server">
+            <label for="chk-keepalive" class="check">Auto-Restart</label>
+            <input type="checkbox" id="chk-keepalive" v-model="serverOptions.keepalive"
+                   @change="socket.emit('setoptions', { keepalive: serverOptions.keepalive })">
           </div>
 
           <button id="logout" @click="logOut">Log Out</button>
@@ -297,11 +312,21 @@ onMounted(() => {
   background: rgb(28, 28, 28);
   border: var(--border);
   border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .option {
-  margin-top: 3px;
-  margin-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  border-left: 2px solid #1271ff;
+  background: #292c33;
+}
+.option.server {
+  border-left: 2px solid #ff7d12;
 }
 
 #nickname {
@@ -311,10 +336,10 @@ onMounted(() => {
   border: none;
   margin: 0;
   box-shadow: inset 0 0 5px #00000066;
+  border-bottom: 2px solid #292929;
 }
 #logout {
   width: 100%;
-  background: rgb(28, 28, 28);
   color: rgb(190, 190, 190);
   height: 30px;
 }

@@ -1,12 +1,13 @@
 require('dotenv').config()
 import { Server } from 'socket.io'
 import * as express from 'express'
-import { Wrapper, WrapperOptions } from './wrapper'
+import { Wrapper } from './wrapper'
 import { Messenger, MessengerOptions } from './messenger'
 import { AddressInfo } from 'net'
 import * as minimist from 'minimist'
 import * as path from 'path'
 import * as fs from 'fs'
+import { setOptions, SetServerOptions } from './server-options'
 
 if (!process.env.CORS_ORIGIN) {
   console.error('CORS_ORIGIN is not set')
@@ -57,7 +58,10 @@ if (!command) {
   process.exit(1)
 }
 
-const wrapper = new Wrapper(command, argv._, argv as WrapperOptions)
+// set defaults
+setOptions(argv as SetServerOptions)
+
+const wrapper = new Wrapper(command, argv._)
 const messenger = new Messenger(io, wrapper, argv as MessengerOptions)
 wrapper.startProcess()
 
