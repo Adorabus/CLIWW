@@ -1,40 +1,13 @@
-<template lang="pug">
-  #app
-    auth(@submit='sendAuth', :show='!isAuthenticated && isConnected')
-    #console
-      ul.output-log(v-chat-scroll='{always: false, smooth: false}')
-        li.beginning Beginning of Log
-        li.message(v-for='message in messages')
-          pre(v-if='settings.colors && message.spans', :class='getMessageClass(message)')
-            span(v-for='span in message.spans', :style='span.style') {{ span.text }}
-          pre(v-else, :class='{wrap: settings.wordWrap}') {{ message.content }}
-      #bottom
-        input.command-input(
-          type='text', v-bind:value='input', v-on:input='input = $event.target.value', autofocus, autocomplete='off', autocorrect='off', autocapitalize='off', spellcheck='false',
-          @keydown.enter.prevent='send', @keydown.up.prevent='historyUp', @keydown.down.prevent='historyDown'
-        )
-        #options-container
-          #options(v-if='showOptions')
-            input#nickname(type='text', placeholder='nickname', v-model='nickname', @keydown.enter.prevent='setNickname')
-            .option
-              label.check(for='chk-colors') ANSI Colors
-                input#chk-colors(type='checkbox', v-model='settings.colors')
-            .option
-              label.check(for='chk-wrap') Wrap Lines
-                input#chk-wrap(type='checkbox', v-model='settings.wordWrap')
-            button#logout(@click='logOut') Log Out
-          button#options-button.material-icons(@click='showOptions = !showOptions') settings
-</template>
-
-<script>
-import Auth from '@/components/Auth'
-import * as io from 'socket.io-client'
+<script setup>
+import AuthForm from '@/components/AuthForm.vue'
+import { io } from 'socket.io-client'
 import debounce from 'lodash.debounce'
+import { ref, reactive, onMounted, watch } from 'vue'
 
-const ansi = require('ansicolor')
-const { parse, strip } = ansi
+import ansicolor from 'ansicolor'
+const { parse, strip } = ansicolor
 
-ansi.rgb = {
+ansicolor.rgb = {
   black: [0, 0, 0],
   darkGray: [100, 100, 100],
   lightGray: [200, 200, 200],
@@ -76,183 +49,220 @@ function ansiColorize (message) {
   message.content = strip(message.content)
 }
 
-export default {
-  name: 'console',
-  components: {
-    Auth
-  },
-  data () {
-    return {
-      input: '',
-      nickname: '',
-      settings: {
-        wordWrap: true,
-        colors: true
-      },
-      messages: [],
-      history: [],
-      historyPosition: 0,
-      isAuthenticated: true,
-      isConnected: false,
-      isAlive: false,
-      messageLimit: 0,
-      lastPassword: '',
-      socket: null,
-      messageClass: ['plain', 'error', 'command', 'info', 'stderr'],
-      showOptions: false
-    }
-  },
-  methods: {
-    getMessageClass (message) {
-      const obj = {
-        wrap: this.settings.wordWrap
-      }
-      obj['message-' + this.messageClass[message.type]] = true
-      return obj
-    },
-    sendAuth (password) {
-      console.log('Sending auth...')
-      this.socket.emit('auth', password)
-      this.lastPassword = password
-    },
-    send () {
-      // if (this.input.trim().length === 0) return
-      this.socket.emit('command', this.input)
-      this.history.push(this.input)
-      this.input = ''
-    },
-    historyUp () {
-      if (this.historyPosition > 0) {
-        this.historyPosition--
-        this.input = this.history[this.historyPosition]
-      }
-    },
-    historyDown () {
-      if (this.historyPosition < this.history.length - 1) {
-        this.historyPosition++
-        this.input = this.history[this.historyPosition]
-      } else if (this.historyPosition === this.history.length - 1) {
-        this.historyPosition++
-        this.input = ''
-      }
-    },
-    statusChange () {
-      const link = document.querySelector("link[rel*='icon']")
-      if (!this.isConnected) {
-        link.href = 'data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAABMLAAATCwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH9/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/f39//xEREf8RERH/f39//39/f/8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf9/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf9/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAMADAACAAQAAgAEAAIABAACAAQAAgAEAAIABAACAAQAAgAEAAIABAACAAQAAgAEAAIABAADAAwAA//8AAA=='
-        return
-      }
+const input = ref('')
+const nickname = ref('')
+const settings = reactive({
+  wordWrap: true,
+  colors: true
+})
+const messages = ref([])
+const history = ref([])
+const historyPosition = ref(0)
+const isAuthenticated = ref(true)
+const isConnected = ref(false)
+const isAlive = ref(false)
+const messageLimit = ref(0)
+const lastPassword = ref('')
+const messageClass = ['plain', 'error', 'command', 'info', 'stderr']
+const showOptions = ref(false)
+let socket = null
 
-      let name = 'favicon'
-      if (this.isConnected && this.isAuthenticated) {
-        name = 'connected'
-        if (!this.isAlive) name = 'stopped'
-      }
-      link.href = `${name}.ico`
-    },
-    setNickname () {
-      if (this.isConnected) {
-        this.socket.emit('nickname', this.nickname)
-      }
-    },
-    logOut () {
-      localStorage.clear()
-      location.reload()
-    }
-  },
-  watch: {
-    history () {
-      this.historyPosition = this.history.length
-    },
-    isConnected () {
-      this.statusChange()
-    },
-    isAuthenticated () {
-      this.statusChange()
-    },
-    isAlive () {
-      this.statusChange()
-    },
-    nickname: debounce(function () {
-      this.setNickname()
-      localStorage.setItem('nickname', this.nickname)
-    }, 500),
-    settings: {
-      handler () {
-        localStorage.setItem('settings', JSON.stringify(this.settings))
-      },
-      deep: true
-    }
-  },
-  async mounted () {
-    this.$nextTick(() => {
-      const loadedSettings = localStorage.getItem('settings')
-      if (loadedSettings) {
-        this.settings = JSON.parse(loadedSettings)
-      }
+const getMessageClass = (message) => {
+  const obj = {
+    wrap: settings.wordWrap
+  }
+  obj['message-' + messageClass[message.type]] = true
+  return obj
+}
 
-      this.nickname = localStorage.getItem('nickname') || ''
+const sendAuth = (password) => {
+  console.log('Sending auth...')
+  socket.emit('auth', password)
+  lastPassword.value = password
+}
 
-      if (this.socket) {
-        this.socket.removeAllListeners()
-      }
+const send = () => {
+  socket.emit('command', input.value)
+  history.value.push(input.value)
+  input.value = ''
+}
 
-      const port = window.webpackHotUpdate ? 8999 : location.port
-      this.socket = io(`${location.hostname}:${port}`)
-      this.socket.on('message', (message) => {
-        if (this.messageLimit > 0) {
-          if (this.messages.length === this.messageLimit) {
-            this.messages.shift()
-          }
-        }
-
-        ansiColorize(message)
-
-        this.messages.push(message)
-      })
-      this.socket.on('authsuccess', async () => {
-        console.log('Authentication success!')
-        localStorage.setItem('password', this.lastPassword)
-        this.isAuthenticated = true
-        this.setNickname()
-      })
-      this.socket.on('authfail', () => {
-        console.log('Authentication failed!')
-        localStorage.removeItem('password')
-        this.isAuthenticated = false
-      })
-      this.socket.on('authrequest', () => {
-        console.log('Reauthenticating...')
-        this.sendAuth(localStorage.getItem('password'))
-      })
-      this.socket.on('connect', () => {
-        console.log('Connected!')
-        this.isConnected = true
-      })
-      this.socket.on('disconnect', () => {
-        console.log('Disconnected!')
-        this.isConnected = false
-      })
-      this.socket.on('serverstate', (state) => {
-        for (const [key, value] of Object.entries(state)) {
-          this[key] = value
-        }
-
-        for (const message of this.messages) {
-          ansiColorize(message)
-        }
-      })
-      if (localStorage.getItem('password')) {
-        this.sendAuth(localStorage.getItem('password'))
-      } else {
-        this.isAuthenticated = false
-      }
-    })
+const historyUp = () => {
+  if (historyPosition.value > 0) {
+    historyPosition.value--
+    input.value = history.value[historyPosition.value]
   }
 }
+
+const historyDown = () => {
+  if (historyPosition.value < history.value.length - 1) {
+    historyPosition.value++
+    input.value = history.value[historyPosition.value] || ''
+  }
+}
+
+const statusChange = () => {
+  const link = document.querySelector("link[rel*='icon']")
+  if (!isConnected.value) {
+    link.href = 'data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAABMLAAATCwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH9/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//wAAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/f39//xEREf8RERH/f39//39/f/8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//ERER/xEREf9/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/f39//wAAAAAAAAAAf39//xEREf9/f3//ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/39/f/8AAAAAAAAAAH9/f/8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf8RERH/ERER/xEREf9/f3//AAAAAAAAAAB/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAMADAACAAQAAgAEAAIABAACAAQAAgAEAAIABAACAAQAAgAEAAIABAACAAQAAgAEAAIABAADAAwAA//8AAA=='
+    return
+  }
+
+  let name = 'favicon'
+  if (isConnected.value && isAuthenticated.value) {
+    name = 'connected'
+    if (!isAlive.value) name = 'stopped'
+  }
+  link.href = `${name}.ico`
+}
+
+const setNickname = () => {
+  if (isConnected.value) {
+    socket.emit('nickname', nickname.value)
+  }
+}
+
+const logOut = () => {
+  localStorage.clear()
+  location.reload()
+}
+
+watch(history, () => {
+  historyPosition.value = history.value.length
+})
+
+watch([isConnected, isAuthenticated, isAlive], statusChange)
+
+watch(nickname, debounce(() => {
+  setNickname()
+  localStorage.setItem('nickname', nickname.value)
+}, 500))
+
+watch(settings, () => {
+  localStorage.setItem('settings', JSON.stringify(settings))
+}, { deep: true })
+
+onMounted(() => {
+  const loadedSettings = localStorage.getItem('settings')
+  if (loadedSettings) {
+    Object.assign(settings, JSON.parse(loadedSettings))
+  }
+
+  nickname.value = localStorage.getItem('nickname') || ''
+
+  if (socket) {
+    socket.removeAllListeners()
+  }
+
+  const port = import.meta.env.DEV ? 8999 : location.port
+  socket = io(`${location.hostname}:${port}`)
+
+  socket.on('message', (message) => {
+    if (messageLimit.value > 0 && messages.value.length === messageLimit.value) {
+      messages.value.shift()
+    }
+
+    ansiColorize(message)
+    messages.value.push(message)
+  })
+
+  socket.on('authsuccess', () => {
+    console.log('Authentication success!')
+    localStorage.setItem('password', lastPassword.value)
+    isAuthenticated.value = true
+    setNickname()
+  })
+
+  socket.on('authfail', () => {
+    console.log('Authentication failed!')
+    localStorage.removeItem('password')
+    isAuthenticated.value = false
+  })
+
+  socket.on('authrequest', () => {
+    console.log('Reauthenticating...')
+    sendAuth(localStorage.getItem('password'))
+  })
+
+  socket.on('connect', () => {
+    console.log('Connected!')
+    isConnected.value = true
+  })
+
+  socket.on('disconnect', () => {
+    console.log('Disconnected!')
+    isConnected.value = false
+  })
+
+  socket.on('serverstate', (state) => {
+    if (state.isAlive !== undefined) {
+      isAlive.value = state.isAlive
+    }
+
+    if (state.messageLimit !== undefined) {
+      messageLimit.value = state.messageLimit
+    }
+
+    if (state.messages !== undefined) {
+      messages.value = state.messages.map((message) => {
+        ansiColorize(message)
+        return message
+      })
+    }
+  })
+
+  if (localStorage.getItem('password')) {
+    sendAuth(localStorage.getItem('password'))
+  } else {
+    isAuthenticated.value = false
+  }
+})
 </script>
 
-<style lang="scss">
+<template>
+<div id="app">
+  <auth-form @submit="sendAuth" :show="!isAuthenticated && isConnected" />
+
+  <div id="console">
+    <ul class="output-log" v-autoscroll>
+      <li class="beginning">Beginning of Log</li>
+      <li class="message" v-for="message in messages">
+        <pre v-if="settings.colors && message.spans" :class="getMessageClass(message)">
+          <span v-for="span in message.spans" :style="span.style">{{ span.text }}</span>
+        </pre>
+        <pre v-else :class="{ wrap: settings.wordWrap }">{{ message.content }}</pre>
+      </li>
+    </ul>
+
+    <div id="bottom">
+      <input class="command-input" type="text" v-bind:value="input" v-on:input="input = $event.target.value" autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          @keydown.enter.prevent="send" @keydown.up.prevent="historyUp" @keydown.down.prevent="historyDown">
+
+      <div id="options-container">
+        <div id="options" v-if="showOptions">
+          <input type="text" placeholder="nickname" v-model="nickname" @keydown.enter.prevent="setNickname">
+
+          <div class="option">
+            <label for="chk-colors" class="check">ANSI Colors</label>
+            <input type="checkbox" id="chk-colors" v-model="settings.colors">
+          </div>
+
+          <div class="option">
+            <label for="chk-wrap" class="check">Wrap Lines</label>
+            <input type="checkbox" id="chk-wrap" v-model="settings.wordWrap">
+          </div>
+
+          <button id="logout" @click="logOut">Log Out</button>
+        </div>
+
+        <button id="options-button" class="material-icons" @click="showOptions = !showOptions">settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+</template>
+
+<style>
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -272,7 +282,7 @@ export default {
 #options-button {
   width: 40px;
   height: 40px;
-  border: $border;
+  border: var(--border);
   border-left: none;
   background: #1b1d22;
   color: rgb(190, 190, 190);
@@ -287,7 +297,7 @@ export default {
   right: 0;
   width: 180px;
   background: rgb(28, 28, 28);
-  border: $border;
+  border: var(--border);
   border-bottom: none;
 }
 
@@ -310,30 +320,8 @@ export default {
   color: rgb(190, 190, 190);
   height: 30px;
 }
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-}
-body {
-  background: #1b1d22;
-  color: $text-color;
-}
-input {
-  background: rgb(24, 24, 24);
-  border: $border;
-  color: $text-color;
-}
-textarea, select, input, button {
-  &:focus {
-    outline: none;
-  }
-}
-button {
-  border: 1px solid #333;
-}
 .output-log, .command-input {
-  font-family: $monospace;
+  font-family: var(--monospace);
 }
 .output-log {
   margin: 0;
@@ -361,29 +349,11 @@ button {
   display: inline-block;
   width: 100%;
 }
-input[type=text], input[type=password] {
-  height: 40px;
-  padding: 5px;
-  font-size: 12pt;
-  box-sizing: border-box;
-  margin: 0;
-}
-label {
-  font-size: 10pt;
-}
-pre {
-  margin: 0;
-  padding: 0;
-}
 .wrap {
-  white-space: pre-wrap;       /* Since CSS 2.1 */
-  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-  white-space: -pre-wrap;      /* Opera 4-6 */
-  white-space: -o-pre-wrap;    /* Opera 7 */
-  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 .message {
-  // background-color: #20232a;
   margin: 0;
   padding-left: 4px;
 }

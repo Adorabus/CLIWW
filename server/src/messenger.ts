@@ -29,9 +29,7 @@ export interface MessengerOptions {
 
 function validNickname (nickname: string) {
   if (!nickname) return false
-  if (typeof(nickname) !== 'string') return false
-  if (nickname.length < 1 || nickname.length > 16) return false
-  return true
+  return !(nickname.length < 1 || nickname.length > 16)
 }
 
 export class Messenger {
@@ -49,7 +47,7 @@ export class Messenger {
     io.on('connection', (client: Socket) => {
       const ipAddr = client.client.conn.remoteAddress
       this.log(`Connection from [${ipAddr}].`)
-      client.emit('authrequest')
+      // client.emit('authrequest')
 
       client.on('auth', (password) => {
         if (this.auth(client, password)) {
@@ -75,11 +73,10 @@ export class Messenger {
       })
 
       client.on('command', (command) => {
-        if (!('authorized' in client.rooms)) {
+        if (!client.rooms.has('authorized')) {
           client.emit('authrequest')
           return
         }
-        // if (command.trim().length === 0) return
 
         this.broadcastMessage({
           content: `[${client.nickname || ipAddr}]> ${command}`,
@@ -174,7 +171,7 @@ export class Messenger {
     const ip = client.client.conn.remoteAddress
 
     // are they banned?
-    if (ip in this.bans && minutesAgo(this.bans[ip]) < 10) {
+    if (this.bans[ip] && minutesAgo(this.bans[ip]) < 10) {
       return false
     }
 

@@ -29,7 +29,7 @@ class Wrapper extends events_1.EventEmitter {
             this._isAlive = false;
             this.emit('exit', code, signal);
             if (this.options.keepalive && this.startedAt) {
-                if (util_1.secondsAgo(this.startedAt.valueOf()) > 5) {
+                if ((0, util_1.secondsAgo)(this.startedAt.valueOf()) > 5) {
                     this.emit('message', 'Restarting wrapped process...');
                     this.startProcess();
                 }

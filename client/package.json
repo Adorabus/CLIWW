@@ -1,40 +1,24 @@
 {
-  "name": "client",
-  "version": "1.4.2",
+  "name": "client2",
+  "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "ansicolor": "^1.1.93",
-    "eslint": "^7.5.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "eslint-plugin-vue": "^6.2.2",
+    "ansicolor": "^2.0.3",
     "lodash.debounce": "^4.0.8",
-    "socket.io-client": "^2.5.0",
-    "vue": "^2.6.11",
-    "vue-chat-scroll": "^1.4.0"
+    "socket.io-client": "^4.8.0",
+    "vue": "^3.4.29"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^5.0.8",
-    "@vue/cli-plugin-eslint": "^5.0.8",
-    "@vue/cli-service": "^5.0.8",
-    "@vue/eslint-config-standard": "^5.1.2",
-    "node-sass": "^8.0.0",
-    "pug": "^3.0.2",
-    "pug-plain-loader": "^1.0.0",
-    "sass-loader": "^7.1.0",
-    "sass-resources-loader": "^2.0.3",
-    "vue-template-compiler": "^2.6.11"
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 8"
-  ]
+    "@vitejs/plugin-vue": "^5.0.5",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.23.0",
+    "vite": "^5.3.1"
+  }
 }

@@ -1,12 +1,17 @@
 require('dotenv').config()
-import * as socketIO from 'socket.io'
+import { Server } from 'socket.io'
 import * as express from 'express'
-import {Wrapper, WrapperOptions} from './wrapper'
-import {Messenger, MessengerOptions} from './messenger'
-import {AddressInfo} from 'net'
+import { Wrapper, WrapperOptions } from './wrapper'
+import { Messenger, MessengerOptions } from './messenger'
+import { AddressInfo } from 'net'
 import * as minimist from 'minimist'
 import * as path from 'path'
 import * as fs from 'fs'
+
+if (!process.env.CORS_ORIGIN) {
+  console.error('CORS_ORIGIN is not set')
+  process.exit(1)
+}
 
 const argv = minimist(process.argv.slice(2), {'stopEarly': true})
 const app = express()
@@ -34,7 +39,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
 
-const io = socketIO(server)
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CORS_ORIGIN,
+  }
+})
 
 const command = argv._.shift() as string
 
