@@ -10,6 +10,8 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@volar/language-server": "2.4.0-alpha.18",
+    "@vue/language-server": "2.0.28",
     "ansicolor": "^2.0.3",
     "lodash.debounce": "^4.0.8",
     "socket.io-client": "^4.8.0",
