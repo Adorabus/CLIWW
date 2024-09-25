@@ -9,11 +9,6 @@ import * as path from 'path'
 import * as fs from 'fs'
 import { setOptions, SetServerOptions } from './server-options'
 
-if (!process.env.CORS_ORIGIN) {
-  console.error('CORS_ORIGIN is not set')
-  process.exit(1)
-}
-
 const argv = minimist(process.argv.slice(2), {'stopEarly': true})
 const app = express()
 let server: any

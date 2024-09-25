@@ -9,10 +9,6 @@ const minimist = require("minimist");
 const path = require("path");
 const fs = require("fs");
 const server_options_1 = require("./server-options");
-if (!process.env.CORS_ORIGIN) {
-    console.error('CORS_ORIGIN is not set');
-    process.exit(1);
-}
 const argv = minimist(process.argv.slice(2), { 'stopEarly': true });
 const app = express();
 let server;
