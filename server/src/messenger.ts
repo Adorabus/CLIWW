@@ -81,6 +81,11 @@ export class Messenger {
       })
 
       client.on('setoptions', (data) => {
+        if (!client.rooms.has('authorized')) {
+          client.emit('authrequest')
+          return
+        }
+
         setOptions(data)
         this.broadcast('serveroptions', getOptions())
       })

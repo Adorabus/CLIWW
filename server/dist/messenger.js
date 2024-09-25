@@ -54,6 +54,10 @@ class Messenger {
                 client.nickname = nickname;
             });
             client.on('setoptions', (data) => {
+                if (!client.rooms.has('authorized')) {
+                    client.emit('authrequest');
+                    return;
+                }
                 (0, server_options_1.setOptions)(data);
                 this.broadcast('serveroptions', (0, server_options_1.getOptions)());
             });
