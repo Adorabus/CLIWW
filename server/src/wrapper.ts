@@ -37,7 +37,6 @@ export class Wrapper extends EventEmitter {
       this._isAlive = false
       this.emit('exit', code, signal)
 
-      console.log(getOptions().keepalive, 'keepalive')
       if (getOptions().keepalive && this.startedAt) {
         if (secondsAgo(this.startedAt.valueOf()) > 5) {
           this.emit('message', 'Restarting wrapped process...')

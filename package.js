@@ -18,7 +18,7 @@ if (commandExistsSync('tsc')) {
 
 console.log('Building client...')
 process.chdir(cldir)
-execSync('npm run build', {stdio: 'inherit'})
+execSync('pnpm run build', {stdio: 'inherit'})
 
 console.log('Building server...')
 process.chdir(svdir)

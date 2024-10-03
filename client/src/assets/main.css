@@ -48,3 +48,45 @@ input[type=text], input[type=password] {
   box-sizing: border-box;
   margin: 0;
 }
+
+.mb {
+  margin-bottom: 10px;
+}
+.mt {
+  margin-top: 10px;
+}
+.ml {
+  margin-left: 10px;
+}
+.mr {
+  margin-right: 10px;
+}
+
+.flex {
+  display: flex;
+}
+.flex-column {
+  flex-direction: column;
+}
+.gap {
+  gap: 10px;
+}
+
+.center {
+  justify-content: center;
+  align-items: center;
+}
+.j-center {
+  justify-content: center;
+}
+.i-center {
+  align-items: center;
+}
+
+.panel {
+  background-color: #24252b;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px black;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}

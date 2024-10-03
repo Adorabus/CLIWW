@@ -1,5 +1,6 @@
 <script setup>
 import AuthForm from '@/components/AuthForm.vue'
+import ScreenModal from '@/components/ScreenModal.vue'
 import { io } from 'socket.io-client'
 import debounce from 'lodash.debounce'
 import { ref, reactive, onMounted, watch } from 'vue'
@@ -127,9 +128,22 @@ const setNickname = () => {
   }
 }
 
+const isShowingLogOutModal = ref(false)
 const logOut = () => {
+  isShowingLogOutModal.value = true
+}
+const logOutConfirmed = () => {
   localStorage.clear()
   location.reload()
+}
+
+const isShowingRestartModal = ref(false)
+const restartServer = () => {
+  isShowingRestartModal.value = true
+}
+const restartServerConfirmed = () => {
+  socket.emit('restart')
+  isShowingRestartModal.value = false
 }
 
 watch(history, () => {
@@ -249,6 +263,8 @@ onMounted(() => {
         <div id="options" v-if="showOptions">
           <input id="nickname" type="text" placeholder="nickname" v-model="nickname" @keydown.enter.prevent="setNickname">
 
+          <button id="logout" @click="logOut">Log Out</button>
+
           <div class="option">
             <label for="chk-colors" class="check">ANSI Colors</label>
             <input type="checkbox" id="chk-colors" v-model="settings.colors">
@@ -265,13 +281,35 @@ onMounted(() => {
                    @change="socket.emit('setoptions', { keepalive: serverOptions.keepalive })">
           </div>
 
-          <button id="logout" @click="logOut">Log Out</button>
+          <button id="restart" @click="restartServer">Restart Server</button>
         </div>
 
         <button id="options-button" class="material-icons" @click="showOptions = !showOptions">settings</button>
       </div>
     </div>
   </div>
+
+  <screen-modal v-model="isShowingRestartModal">
+    <div class="screen-modal-content">
+      <div class="mb">Are you sure you want to restart the server?</div>
+
+      <div class="flex center gap">
+        <button class="modal-button" @click="restartServerConfirmed">Yes</button>
+        <button class="modal-button" @click="isShowingRestartModal = false">No</button>
+      </div>
+    </div>
+  </screen-modal>
+
+  <screen-modal v-model="isShowingLogOutModal">
+    <div class="screen-modal-content">
+      <div class="mb">Are you sure you want to log out?</div>
+
+      <div class="flex center gap">
+        <button class="modal-button" @click="logOutConfirmed">Yes</button>
+        <button class="modal-button" @click="isShowingLogOutModal = false">No</button>
+      </div>
+    </div>
+  </screen-modal>
 </div>
 </template>
 
@@ -343,6 +381,13 @@ onMounted(() => {
   color: rgb(190, 190, 190);
   height: 30px;
 }
+#restart {
+  width: 100%;
+  color: rgb(241, 55, 26);
+  border: 1px solid rgb(241, 55, 26);
+  background: #421818;
+  height: 30px;
+}
 .output-log, .command-input {
   font-family: var(--monospace);
 }
@@ -407,7 +452,12 @@ onMounted(() => {
   padding: 4px;
   line-height: 13px;
 }
-.center {
-  text-align: center;
+
+.modal-button {
+  padding: 5px;
+  width: 40px;
+  border-width: 2px;
+}
+.modal-button:hover {
 }
 </style>

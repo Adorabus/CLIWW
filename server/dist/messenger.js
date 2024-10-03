@@ -61,6 +61,13 @@ class Messenger {
                 (0, server_options_1.setOptions)(data);
                 this.broadcast('serveroptions', (0, server_options_1.getOptions)());
             });
+            client.on('restart', () => {
+                if (!client.rooms.has('authorized')) {
+                    client.emit('authrequest');
+                    return;
+                }
+                this.wrapper.startProcess();
+            });
             client.on('command', (command) => {
                 if (!client.rooms.has('authorized')) {
                     client.emit('authrequest');
@@ -124,6 +131,12 @@ class Messenger {
             if (code === 0) {
                 this.broadcastMessage({
                     content: 'The server has exited.\nType rs to restart it.',
+                    type: MessageType.Info
+                }, true);
+            }
+            else if (code === null) {
+                this.broadcastMessage({
+                    content: 'The server was forcibly stopped.',
                     type: MessageType.Info
                 }, true);
             }
